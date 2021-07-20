@@ -1,5 +1,5 @@
 # [RIDE MY WAY]()
-* It is an REST Application Programming Interface(API) for sharing a ride. Users if going the same direction can share the ride.
+* It is a REST Application Programming Interface(API) for sharing a ride if persons are traveling in the same direction.
 * Ride - This is a vehicle with passenger space.
 * Driver - The Creator of the ride is assuemed to me the driver.
 
