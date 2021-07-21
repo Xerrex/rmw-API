@@ -1,11 +1,11 @@
-from flask_restplus import Api
+from flask import Flask
 
-api = Api()
 
-def ext_init_app(app):
+def ext_init_app(app: Flask):
     """Initialize apps with the Flask App
 
     Args:
         app (Flask): Instance of a Flask app
     """
-    api.init_app(app)
+    pass
+    

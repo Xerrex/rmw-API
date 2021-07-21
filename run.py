@@ -1,6 +1,6 @@
 import os
 
-from api.api import create_api
+from app.api import create_api
 
 conf = os.getenv("API_CONF")
 api = create_api(conf)

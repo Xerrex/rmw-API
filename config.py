@@ -4,8 +4,11 @@ import os
 class Config:
     """Base Configurations
     """
-    SECRET_KEY = os.getenv("SECRET_KEY") or os.urandom(16)
     API_TITLE = os.getenv("API_TITLE") or "RMI-API"
+    API_VERSION = os.getenv("API_VERSION") or "1.0"
+    API_DESCRIPTION = os.getenv("API_DESCRIPTION")
+
+    SECRET_KEY = os.getenv("SECRET_KEY") or os.urandom(16)
 
 
 class DevelopmentConfig(Config):
