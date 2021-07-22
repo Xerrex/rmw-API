@@ -1,20 +1,14 @@
-from unittest import TestCase
+from unittest import main
+
+from .apibasetestcase import ApiBaseTestCase
 
 
-from api.api import create_api
-
-
-class DefaultRouteCase(TestCase):
+class DefaultRouteCase(ApiBaseTestCase):
 
     def setUp(self) -> None:
-        self. api = create_api("testing")
-        self.api_context = self.api.app_context()
-        self.api_context.push()
-        self.client  = self.api.test_client()
+        super().setUp()
         self.dr_response = self.client.get('/')
     
-    def tearDown(self) -> None:
-        self.api_context.pop()
 
     
     def test_default_route_status_code(self):
@@ -31,3 +25,6 @@ class DefaultRouteCase(TestCase):
         """
         title = bytes(self.api.config['API_TITLE'], 'utf-8')
         self.assertIn(title, self.dr_response.data)
+
+if __name__ = '__main__':
+    main(verbosity=2)

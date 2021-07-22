@@ -1,4 +1,5 @@
 import os
+from re import DEBUG
 
 
 class Config:
@@ -21,6 +22,7 @@ class TestingConfig(Config):
     """Testing Configurations
     """
     TESTING = True
+    DEBUG = True
 
 
 class ProductionConfig(Config):
