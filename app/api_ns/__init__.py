@@ -6,7 +6,17 @@ from .auth_ns import auth_ns as Authentication_NS
 
 api_bp = Blueprint("api_bp", __name__, url_prefix="/api")
 
-api = Api(api_bp)
+authorizations = {
+    'Bearer': {
+        'type': 'apiKey',
+        'in': 'header',
+        'name': 'Authorization'
+    }  # expexted Authorization: Bearer <JWT>
+}
+
+
+
+api = Api(api_bp, authorizations=authorizations)
 api.add_namespace(Authentication_NS, path='/auth')
 
 
