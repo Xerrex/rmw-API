@@ -52,11 +52,15 @@ class SignupResource(Resource):
         password = new_user_args['password']
 
         
-        if get_user_by_email(email) or get_user_by_username(username):
-            # TODO: check email, username individualy
+        if get_user_by_email(email):
             return {
-                'msg': 'Your Username or Email already exists',
-                'action': 'Change your Username and Email'
+                'msg': f'Email already exists: {email}',
+                'action': 'Use another email',
+            }, 409
+        elif get_user_by_username(username):
+            return {
+                'msg': f'Username has already been taken: {username}',
+                'action': 'Choose another username'
             }, 409
         else:
             create_user(name, username, email, password)

@@ -28,7 +28,6 @@ class TestAuthNameSpaceCase(ApiBaseTestCase):
                         content_type='application/json')
         return response
 
-
     def setUp(self) -> None:
         super().setUp()
         self.test_user = {
