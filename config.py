@@ -1,5 +1,5 @@
 import os
-from re import DEBUG
+from datetime import timedelta
 
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
@@ -13,7 +13,9 @@ class Config:
     API_DESCRIPTION = os.getenv("API_DESCRIPTION")
 
     SECRET_KEY = os.getenv("SECRET_KEY") or os.urandom(16)
+    
     JWT_SECRET_KEY = SECRET_KEY
+    JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=1)
 
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 

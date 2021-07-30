@@ -28,7 +28,6 @@ class TestAuthNameSpaceCase(ApiBaseTestCase):
                         content_type='application/json')
         return response
 
-
     def setUp(self) -> None:
         super().setUp()
         self.test_user = {
@@ -82,16 +81,10 @@ class TestAuthNameSpaceCase(ApiBaseTestCase):
         
         self.assertEqual(res.status_code, 401)
         self.assertIn(msg, res_data['msg'])
-
-
-    def test_user_double_login(self):
-        """Assert that a User cannot Login twice
-        """
-        # TODO: Test Multiple login
-        pass
     
     def test_user_logout(self):
         """Assert that a User can logout
+        & token blacklisted
         """
         res = self.register_user()
         res = self.login_user()
@@ -104,8 +97,10 @@ class TestAuthNameSpaceCase(ApiBaseTestCase):
         }
         
         res = self.client.delete(self.logout_url, headers=headers)
-
         self.assertEqual(res.status_code, 200)
+    
+        after_res = self.client.delete(self.logout_url, headers=headers)
+        self.assertEqual(after_res.status_code, 401) #previous token blaclisted
 
 
     def test_logout_for_user_not_logged_in(self):

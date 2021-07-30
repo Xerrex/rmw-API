@@ -52,11 +52,15 @@ class SignupResource(Resource):
         password = new_user_args['password']
 
         
-        if get_user_by_email(email) or get_user_by_username(username):
-            # TODO: check email, username individualy
+        if get_user_by_email(email):
             return {
-                'msg': 'Your Username or Email already exists',
-                'action': 'Change your Username and Email'
+                'msg': f'Email already exists: {email}',
+                'action': 'Use another email',
+            }, 409
+        elif get_user_by_username(username):
+            return {
+                'msg': f'Username has already been taken: {username}',
+                'action': 'Choose another username'
             }, 409
         else:
             create_user(name, username, email, password)
@@ -76,7 +80,7 @@ class LoginResource(Resource):
     login_parser.remove_argument('name')
     login_parser.remove_argument('email')
 
-
+    @jwt_required(optional=True)
     @auth_ns.doc("login")
     @auth_ns.expect(login_schema)
     @auth_ns.response(200, "Access Token was successfully issued")
@@ -84,7 +88,10 @@ class LoginResource(Resource):
     def post(self):
         """Get a valid Access Token 
         """
-
+        if get_jwt(): # blacklist existing token if available
+            jti = get_jwt()['jti']
+            blacklist_token(jti)
+        
         login_args = self.login_parser.parse_args()
         username = login_args['username']
         password = login_args['password']
@@ -103,9 +110,6 @@ class LoginResource(Resource):
             'action': 'Head over to registration',
             'link': url_for('api_bp.auth_signup_resource')
         }, 401
-        # TODO: handle user token expiry
-        # TODO: prevent multiple logins
-        # TODO: 409 logout first
 
 
 
@@ -116,7 +120,7 @@ class LogoutResource(Resource):
     @jwt_required()
     @auth_ns.doc('logout', security='Bearer')
     @auth_ns.response(200, "Access Token was Revoked")
-    @auth_ns.response(401, 'Missing Authorization Header')
+    @auth_ns.response(401, 'Something Wrong with Authorization token')
     def delete(self):
         """Revoke Access Token
         """
