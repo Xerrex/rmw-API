@@ -19,6 +19,8 @@ class Config:
 
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
+    RESTX_MASK_SWAGGER= False
+
 
 class DevelopmentConfig(Config):
     """Development Configurations
