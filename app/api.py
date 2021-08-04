@@ -1,7 +1,7 @@
 from flask import Flask, render_template
 from config import configs
 
-from .api_ns import api_init_app
+from .api_BP import api_init_app
 from .utils.exts import ext_init_app
 
 

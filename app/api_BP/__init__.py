@@ -1,7 +1,8 @@
 from flask import Flask, Blueprint
 from flask_restx import Api
 
-from .auth_ns import auth_ns as Authentication_NS
+from .ns_auth import auth_ns as Authentication_NS
+from .ns_ride import ride_ns as Ride_NS
 
 
 api_bp = Blueprint("api_bp", __name__, url_prefix="/api")
@@ -18,6 +19,7 @@ authorizations = {
 
 api = Api(api_bp, authorizations=authorizations)
 api.add_namespace(Authentication_NS, path='/auth')
+api.add_namespace(Ride_NS, path='/rides')
 
 
 def api_init_app(app: Flask):
