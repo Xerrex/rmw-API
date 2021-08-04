@@ -1,12 +1,7 @@
 import json
 import unittest
 
-from werkzeug.wrappers.response import Response
-
-from .apibasetestcase import ApiBaseTestCase
-
-from app.data.user_controller import create_user, \
-        get_user_by_id
+from tests.apibasetestcase import ApiBaseTestCase
 
 
 class TestAuthNameSpaceCase(ApiBaseTestCase):
@@ -101,7 +96,6 @@ class TestAuthNameSpaceCase(ApiBaseTestCase):
     
         after_res = self.client.delete(self.logout_url, headers=headers)
         self.assertEqual(after_res.status_code, 401) #previous token blaclisted
-
 
     def test_logout_for_user_not_logged_in(self):
         """Assert that Logout is allowed only 

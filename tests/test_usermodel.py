@@ -2,14 +2,14 @@ from unittest import main
 
 from flask_jwt_extended import decode_token
 from app.data.models import User
-from .apibasetestcase import ApiBaseTestCase
+from tests.apibasetestcase import ApiBaseTestCase
 
 
 class TestUserModelCase(ApiBaseTestCase):
     
     def setUp(self) -> None:
         super().setUp()
-        self. u1 = User("Bob Developer", "bobdev", "bobdev@api.com", 'qwerty12345')
+        self.u1 = User("Bob Developer", "bobdev", "bobdev@api.com", 'qwerty12345')
 
 
     def test_user_creation(self):

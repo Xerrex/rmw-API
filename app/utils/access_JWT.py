@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from app.data.user_controller import get_user_by_username
+from app.data.controller_user import get_user_by_username
 from app.utils.exts import db, jwt
 
 @jwt.user_lookup_loader

@@ -1,6 +1,6 @@
 from unittest import main
 
-from .apibasetestcase import ApiBaseTestCase
+from tests.apibasetestcase import ApiBaseTestCase
 
 
 class DefaultRouteCase(ApiBaseTestCase):
@@ -26,5 +26,5 @@ class DefaultRouteCase(ApiBaseTestCase):
         title = bytes(self.api.config['API_TITLE'], 'utf-8')
         self.assertIn(title, self.dr_response.data)
 
-if __name__ = '__main__':
+if __name__ == '__main__':
     main(verbosity=2)
