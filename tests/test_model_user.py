@@ -1,15 +1,16 @@
 from unittest import main
 
 from flask_jwt_extended import decode_token
-from app.data.models import User
+
 from tests.apibasetestcase import ApiBaseTestCase
+from tests.utils.helpers import create_user
 
 
 class TestUserModelCase(ApiBaseTestCase):
     
     def setUp(self) -> None:
         super().setUp()
-        self.u1 = User("Bob Developer", "bobdev", "bobdev@api.com", 'qwerty12345')
+        self.u1 = create_user("Bob Developer", "bobdev", "bobdev@api.com", 'qwerty12345')
 
 
     def test_user_creation(self):
@@ -22,6 +23,7 @@ class TestUserModelCase(ApiBaseTestCase):
     def test_saving_to_db(self):
         """Assert that a User is saved to the db
         """
+        self.assertEqual(self.u1.id, None)
         self.u1.save()
         self.assertEqual(self.u1.id, 1)
     

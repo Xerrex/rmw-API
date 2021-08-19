@@ -1,33 +1,29 @@
 import json
-import copy
 
-from werkzeug.sansio.response import Response
 from tests.apibasetestcase import ApiBaseTestCase
 
-from tests.data_ride import ride_data
-from tests.data_ride import ride_update
+from tests.utils.data_ns_ride import ride_data, ride_update
+from tests.utils.data_ns_ride import test_user, test_credentials
+
+
 
 class RideNameSpaceCase(ApiBaseTestCase):
     """Ride Namespace tests
     """
 
-    def login_user(self):
+    def login_user(self, credentials):
         """Login a User
         """
-        credentials = {
-            'username': self.test_user['username'],
-            'password': self.test_user['password']
-        }
         res = self.client.post('/api/auth/login', content_type='application/json', 
                                     data=json.dumps(credentials))
         res_data = res.get_json()
         return res_data['access_token']
     
-    def register_user(self):
+    def register_user(self, user_data):
         """Sign up a user
         """
         self.client.post('/api/auth/signup', content_type='application/json',
-                                        data=json.dumps(self.test_user))
+                                        data=json.dumps(user_data))
     
     def create_ride(self, ride_data):
         """Create a ride
@@ -41,14 +37,8 @@ class RideNameSpaceCase(ApiBaseTestCase):
         super().setUp()
         self.rides_url = '/api/rides/'
 
-        self.test_user = {
-            'name': 'ride user', 
-            'username': 'rideuser', 
-            'email': 'rideuser@testing.com', 
-            'password': 'rideuserpassword'
-        }
-        self.register_user()
-        token = self.login_user()
+        self.register_user(test_user)
+        token = self.login_user(test_credentials)
 
         self.headers = {
             'Authorization': token,
