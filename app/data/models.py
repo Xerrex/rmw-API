@@ -1,4 +1,5 @@
 from datetime import datetime
+from sqlalchemy.orm import backref
 
 from werkzeug.security import check_password_hash, \
     generate_password_hash
@@ -8,6 +9,7 @@ from flask_jwt_extended import create_access_token
 from app.utils.exts import db
 
 DT_FORMAT = '%Y-%m-%d %H:%M:%S.%f' # 2021-08-04 05:35:08.817837
+
 
 class User(db.Model):
     """The User Model
@@ -19,6 +21,7 @@ class User(db.Model):
     password = db.Column(db.String(255), nullable=False)
     last_login = db.Column(db.DateTime, default=datetime.utcnow)
     rides = db.relationship('Ride', backref='owner', lazy=True)
+    my_requests = db.relationship('RideRequest', backref='passenger', lazy=True)
 
     def __init__(self, name, username, email, password):
         """Defines how to create a new User
@@ -82,6 +85,7 @@ class Ride(db.Model):
     end_time = db.Column(db.DateTime, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     created_by = db.Column(db.Integer, db.ForeignKey('user.id'),nullable=False)
+    requests = db.relationship('RideRequest', backref='ride', lazy=True)
 
     def __init__(self, owner, **kwargs):
         """Defines how to create a ride
@@ -118,3 +122,47 @@ class Ride(db.Model):
         r_from = self.town_from
         r_to = self.town_to
         return f'Ride at {r_time}: {r_from} - {r_to}'
+
+
+class RideRequest(db.Model):
+    """Define a situation where a 
+    User makes a request to join a ride
+    """
+    id = db.Column(db.Integer,primary_key=True)
+    ride_id = db.Column(db.Integer, db.ForeignKey('ride.id'), nullable='False')
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable='False')
+    seats = db.Column(db.Integer, nullable=False, default=1)
+    stop = db. Column(db.String(25), default='Ride Destination', nullable=False)
+    status = db.Column(db.String(9), nullable='False', default='Pending')
+    made_at = db.Column(db.DateTime, nullable='False')
+
+    def __init__(self, ride, passenger, stop=None, seats=1):
+        """Define hou to create a request
+
+        Args:
+            ride (int): The ID of a ride
+            passenger (str): The ID of a User
+            stop (str): The destination a user is going
+            seats (int, optional): The number of seats requesting. Defaults to 1.
+        """
+        self.ride_id = ride
+        self.user_id = passenger
+        self.stop = stop
+        self.seats = seats
+        self.made_at = datetime.utcnow()
+    
+    def save(self):
+        """Create/update a Ride 
+        request in the db
+        """
+        db.session.add(self)
+        db.session.commit()
+
+    def __repr__(self):
+        """Define how a RideRequest 
+        is represented
+        """
+        return f'RideRequest-{self.made_at}-{self.stop}'
+    
+
+
