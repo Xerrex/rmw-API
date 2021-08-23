@@ -35,6 +35,7 @@ class RidesResource(Resource):
     @ride_ns.response(int(HTTPStatus.CREATED), "Ride Created Successfully")
     @ride_ns.response(int(HTTPStatus.BAD_REQUEST), 'Ride Details validation Error')
     @ride_ns.response(int(HTTPStatus.UNAUTHORIZED), 'Authorization token is Invalid or missing')
+    @ride_ns.response(int(HTTPStatus.CONFLICT), "Ride not completed exists")
     def post(self):
         """Create a ride
         """
@@ -46,7 +47,7 @@ class RidesResource(Resource):
             return {
                 'msg': f'Your have an active ride that ends after {depart_time}',
                 'action': f'Schedule your ride to depart after "{depart_time}"'
-            }, HTTPStatus.CONFLICT
+            }, HTTPStatus.CONFLICT # TODO: allow making multiple
         ride_id = create_ride(owner, ride_args)
         return {
             'msg': 'Ride Offer was Created successfully',
