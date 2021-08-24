@@ -1,4 +1,6 @@
 from datetime import datetime
+from http import HTTPStatus
+from flask_restx import abort
 from .models import Ride
 
 
@@ -59,3 +61,30 @@ def check_active_ride(owner, depart_time):
             return True
     return None
 
+
+def abort_ride_not_found(rideID):
+    """Abort if a ride does not exists
+    """
+    ride = get_ride_by_id(rideID)
+    msg = 'Ride does not exist'
+    if not ride:
+        abort(HTTPStatus.NOT_FOUND, message=msg)
+
+
+def abort_not_ride_owner(rideID, owner):
+    """Abort if owner not same as that 
+    of the ride
+    """
+    ride = get_ride_by_id(rideID)
+    if ride.user_id != owner:
+        msg = 'Your are not authorized to view requests'
+        abort(HTTPStatus.UNAUTHORIZED, msg)
+
+def abort_ride_owner(rideID, owner):
+    """Abort if owner making a request 
+    to his own ride
+    """
+    ride = get_ride_by_id(rideID)
+    if ride.user_id == owner:
+        msg = 'Prohibited to join your own ride'
+        abort(HTTPStatus.BAD_REQUEST, msg)
