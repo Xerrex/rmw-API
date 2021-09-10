@@ -30,6 +30,7 @@ def get_ride_by_id(id):
 def update_ride(ride_id, **ride_details):
     """Update a ride details
     """
+    # TODO: make sure ride has not happened 
     ride = get_ride_by_id(ride_id)
     ride.vehicle_plate = ride_details['vehicle_plate']
     ride.seats = ride_details['seats']
@@ -41,7 +42,7 @@ def update_ride(ride_id, **ride_details):
     ride.save()
 
 
-
+############################### Helper Methods ####################################
 def check_active_ride(owner, depart_time):
     """Fetches an active ride
     Checks if a user has an active 
@@ -62,6 +63,16 @@ def check_active_ride(owner, depart_time):
     return None
 
 
+def abort_ride_has_departed_or_done(rideID):
+    """Abort if ride has happened
+    """
+    ride = get_ride_by_id(rideID)
+    time_now = datetime.utcnow()
+    if ride.depart_time<=time_now or ride.end_time <= time_now:
+        msg = "You Action is Prohibited: ride has departed/done"
+        abort(HTTPStatus.FORBIDDEN, message=msg)
+
+
 def abort_ride_not_found(rideID):
     """Abort if a ride does not exists
     """
@@ -71,20 +82,21 @@ def abort_ride_not_found(rideID):
         abort(HTTPStatus.NOT_FOUND, message=msg)
 
 
-def abort_not_ride_owner(rideID, owner):
-    """Abort if owner not same as that 
+def abort_not_ride_owner(rideID, user):
+    """Abort if user not same as that 
     of the ride
     """
     ride = get_ride_by_id(rideID)
-    if ride.user_id != owner:
+    if ride.user_id != user:
         msg = 'Your are not authorized to view requests'
-        abort(HTTPStatus.UNAUTHORIZED, msg)
+        abort(HTTPStatus.UNAUTHORIZED, message=msg)
 
-def abort_ride_owner(rideID, owner):
-    """Abort if owner making a request 
+
+def abort_ride_owner(rideID, user):
+    """Abort if user making a request 
     to his own ride
     """
     ride = get_ride_by_id(rideID)
-    if ride.user_id == owner:
+    if ride.user_id == user:
         msg = 'Prohibited to join your own ride'
-        abort(HTTPStatus.BAD_REQUEST, msg)
+        abort(HTTPStatus.BAD_REQUEST, message=msg)

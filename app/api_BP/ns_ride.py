@@ -11,6 +11,7 @@ from app.data.controller_ride import update_ride
 from .dto_ride import ride_model, ride_parser
 
 ride_ns = Namespace('ride', description='Ride Operations')
+ride_ns.models[ride_model.name] = ride_model
 
 
 @ride_ns.route('/')

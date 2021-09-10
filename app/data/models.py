@@ -133,7 +133,7 @@ class RideRequest(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable='False')
     seats = db.Column(db.Integer, nullable=False, default=1)
     stop = db. Column(db.String(25), default='Ride Destination', nullable=False)
-    status = db.Column(db.String(9), nullable='False', default='Pending')
+    status = db.Column(db.String(9), nullable='False', default='Pending') # Accepted/Rejected
     made_at = db.Column(db.DateTime, nullable='False')
 
     def __init__(self, ride, passenger, stop=None, seats=1):
@@ -152,10 +152,16 @@ class RideRequest(db.Model):
         self.made_at = datetime.utcnow()
     
     def save(self):
-        """Create/update a Ride 
+        """Create/update a Request
         request in the db
         """
         db.session.add(self)
+        db.session.commit()
+    
+    def delete(self):
+        """Delete a request
+        """
+        db.session.delete(self)
         db.session.commit()
 
     def __repr__(self):
@@ -163,6 +169,3 @@ class RideRequest(db.Model):
         is represented
         """
         return f'RideRequest-{self.made_at}-{self.stop}'
-    
-
-
