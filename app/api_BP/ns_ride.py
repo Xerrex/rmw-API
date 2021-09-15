@@ -4,10 +4,9 @@ from flask_jwt_extended import jwt_required
 from flask_jwt_extended import current_user
 from flask_restx import Namespace, Resource
 
-from app.data.controller_ride import create_ride, get_all_rides
+from app.data.controller_ride import abort_ride_not_found, create_ride, get_all_rides, \
+                get_ride_by_id, update_ride
 from app.data.controller_ride import check_active_ride
-from app.data.controller_ride import get_ride_by_id
-from app.data.controller_ride import update_ride
 from .dto_ride import ride_model, ride_parser
 
 ride_ns = Namespace('ride', description='Ride Operations')
@@ -39,7 +38,6 @@ class RidesResource(Resource):
     def post(self):
         """Create a ride
         """
-        # TODO POST: Create a ride offer
         ride_args = ride_parser.parse_args()
         depart_time = ride_args['depart_time']
         owner = current_user.id
@@ -71,7 +69,7 @@ class RideResource(Resource):
         """View a ride
         """
         ride = get_ride_by_id(ride_id)
-        if ride:
+        if ride: # TODO:Use Abort
             return ride, HTTPStatus.OK
         return {
             'msg': f'Ride "{ride_id}" Not found',

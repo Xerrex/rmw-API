@@ -30,7 +30,6 @@ def get_ride_by_id(id):
 def update_ride(ride_id, **ride_details):
     """Update a ride details
     """
-    # TODO: make sure ride has not happened 
     ride = get_ride_by_id(ride_id)
     ride.vehicle_plate = ride_details['vehicle_plate']
     ride.seats = ride_details['seats']
