@@ -2,7 +2,7 @@
 ![license](https://img.shields.io/github/license/mashape/apistatus.svg) 
 * It is a REST Application Programming Interface(API) for sharing a ride if persons are traveling in the same direction.
 * Ride - This is a vehicle with passenger space.
-* Driver - The Creator of the ride is assuemed to me the driver.
+* Driver - The Creator of the ride is assumed to be the driver.
 
 * The API is developed in Python/Flask. Consuming the API can be done with any other tech stack that can process JSON endpoints.
 
