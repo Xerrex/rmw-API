@@ -11,8 +11,10 @@
 * Object Relation Mapper(ORM)
 
 ## Table of Contents
-* [Installation & Running](#installation)
-* [Testing](#testing)-coming soon
+|#||
+|-|---------|
+|*| [Installation & Running](#installation)|
+|*| [Testing](#testing)|
 
 ## Installation
 ```
