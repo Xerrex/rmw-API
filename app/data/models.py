@@ -111,7 +111,7 @@ class Ride(db.Model):
     
     def save(self):
         "Save a ride"
-        self.depart_time = datetime.strptime(self.depart_time, DT_FORMAT, ) # 2021-08-04 05:35:08.817837
+        self.depart_time = datetime.strptime(self.depart_time, DT_FORMAT) # 2021-08-04 05:35:08.817837
         self.end_time = datetime.strptime(self.end_time, DT_FORMAT)
         db.session.add(self)
         db.session.commit()

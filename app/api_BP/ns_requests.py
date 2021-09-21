@@ -34,8 +34,8 @@ class AllRequestsResource(Resource):
     def get(self, rideID):
         """Fetch all request on a ride
         """
-        abort_ride_not_found(rideID)
-        abort_not_ride_owner(rideID, current_user.id)
+        abort_ride_not_found(rideID) # 404
+        abort_not_ride_owner(rideID, current_user.id) # 401
         reqs = get_ride_requests(rideID)
         return reqs, HTTPStatus.OK
 
@@ -80,13 +80,16 @@ class RequestResource(Resource):
     @req_ns.expect(req_update_parser)
     @req_ns.response(HTTPStatus.BAD_REQUEST.value, "Ride Request details validation error")
     @req_ns.response(HTTPStatus.OK.value, "Request details were changed successfully")
+    @jwt_required()
     def put(self, rideID, reqID):
         """Change the details of a request
         """
-        abort_ride_not_found(rideID)
-        abort_request_not_found(reqID)
-        abort_not_request_owner(reqID, current_user.id)
-        abort_request_already_accepted(reqID)
+        abort_ride_not_found(rideID) #404
+        abort_request_not_found(reqID) # 404
+        abort_not_request_owner(reqID, current_user.id) # 401
+        
+        abort_request_already_accepted(reqID) # 403 
+        # TODO: allow changing accepted request if more time.
 
         req_update_args = req_update_parser.parse_args()
         stop = req_update_args['stop']
@@ -101,6 +104,7 @@ class RequestResource(Resource):
 
     @req_ns.doc("withdraw_request")
     @req_ns.response(HTTPStatus.NO_CONTENT.value, "Request was removed successfully")
+    @jwt_required()
     def delete(self, rideID, reqID):
         """Remove a request to join a ride
         """
@@ -117,6 +121,7 @@ class RequestResource(Resource):
 
     @req_ns.doc("request_action")
     @req_ns.response(HTTPStatus.OK.value, "Action on Request was successful")
+    @jwt_required()
     def patch(self, rideID, reqID):
         """Accept or Reject a ride
         """
@@ -130,5 +135,5 @@ class RequestResource(Resource):
         return{
             'msg': f'Your have "{action}" the request',
             'action': 'View More requests on this ride',
-            'link': url_for('api_bp.requests_all_requests_resource')
+            'link': url_for('api_bp.requests_all_requests_resource', rideID=rideID)
         }, HTTPStatus.OK
