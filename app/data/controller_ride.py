@@ -1,6 +1,9 @@
 from datetime import datetime
+from http import HTTPStatus
+from flask_restx import abort
 from .models import Ride
 
+DT_FORMAT = '%Y-%m-%d %H:%M:%S.%f' # 2021-08-04 05:35:08.817837
 
 def get_all_rides():
     """Fetches all rides
@@ -39,7 +42,7 @@ def update_ride(ride_id, **ride_details):
     ride.save()
 
 
-
+############################### Helper Methods ####################################
 def check_active_ride(owner, depart_time):
     """Fetches an active ride
     Checks if a user has an active 
@@ -55,7 +58,45 @@ def check_active_ride(owner, depart_time):
         ttime (DateTime): time to compare with values in the endtime
     """
     for ride  in Ride.query.filter_by(created_by=owner):
-        if ride.end_time > depart_time:
+        if ride.end_time > datetime.strptime(depart_time, DT_FORMAT):
             return True
     return None
 
+
+def abort_ride_has_departed_or_done(rideID):
+    """Abort if ride has happened
+    """
+    ride = get_ride_by_id(rideID)
+    time_now = datetime.utcnow()
+    if ride.depart_time<=time_now or ride.end_time <= time_now:
+        msg = "You Action is Prohibited: ride has departed/done"
+        abort(HTTPStatus.FORBIDDEN, message=msg)
+
+
+def abort_ride_not_found(rideID):
+    """Abort if a ride does not exists
+    """
+    ride = get_ride_by_id(rideID)
+    msg = 'Ride does not exist'
+    if not ride:
+        abort(HTTPStatus.NOT_FOUND, message=msg)
+
+
+def abort_not_ride_owner(rideID, user):
+    """Abort if user not same as that 
+    of the ride
+    """
+    ride = get_ride_by_id(rideID)
+    if ride.created_by != user:
+        msg = 'Your are not authorized to view requests'
+        abort(HTTPStatus.UNAUTHORIZED, message=msg)
+
+
+def abort_ride_owner(rideID, user):
+    """Abort if user making a request 
+    to his own ride
+    """
+    ride = get_ride_by_id(rideID)
+    if ride.created_by == user:
+        msg = 'Prohibited to join your own ride'
+        abort(HTTPStatus.BAD_REQUEST, message=msg)

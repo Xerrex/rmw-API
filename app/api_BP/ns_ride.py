@@ -1,17 +1,16 @@
-from datetime import datetime
 from http import HTTPStatus
 from flask import url_for
 from flask_jwt_extended import jwt_required
 from flask_jwt_extended import current_user
 from flask_restx import Namespace, Resource
 
-from app.data.controller_ride import create_ride, get_all_rides
+from app.data.controller_ride import abort_ride_not_found, create_ride, get_all_rides, \
+                get_ride_by_id, update_ride
 from app.data.controller_ride import check_active_ride
-from app.data.controller_ride import get_ride_by_id
-from app.data.controller_ride import update_ride
 from .dto_ride import ride_model, ride_parser
 
 ride_ns = Namespace('ride', description='Ride Operations')
+ride_ns.models[ride_model.name] = ride_model
 
 
 @ride_ns.route('/')
@@ -35,10 +34,10 @@ class RidesResource(Resource):
     @ride_ns.response(int(HTTPStatus.CREATED), "Ride Created Successfully")
     @ride_ns.response(int(HTTPStatus.BAD_REQUEST), 'Ride Details validation Error')
     @ride_ns.response(int(HTTPStatus.UNAUTHORIZED), 'Authorization token is Invalid or missing')
+    @ride_ns.response(int(HTTPStatus.CONFLICT), "Ride not completed exists")
     def post(self):
         """Create a ride
         """
-        # TODO POST: Create a ride offer
         ride_args = ride_parser.parse_args()
         depart_time = ride_args['depart_time']
         owner = current_user.id
@@ -46,7 +45,7 @@ class RidesResource(Resource):
             return {
                 'msg': f'Your have an active ride that ends after {depart_time}',
                 'action': f'Schedule your ride to depart after "{depart_time}"'
-            }, HTTPStatus.CONFLICT
+            }, HTTPStatus.CONFLICT # TODO: allow making multiple
         ride_id = create_ride(owner, ride_args)
         return {
             'msg': 'Ride Offer was Created successfully',
@@ -70,7 +69,7 @@ class RideResource(Resource):
         """View a ride
         """
         ride = get_ride_by_id(ride_id)
-        if ride:
+        if ride: # TODO:Use Abort
             return ride, HTTPStatus.OK
         return {
             'msg': f'Ride "{ride_id}" Not found',

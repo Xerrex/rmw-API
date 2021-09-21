@@ -1,5 +1,3 @@
-# Support Postgres/Heroku:gunicorn, psycopg2-binary
-
 alembic==1.6.5
 aniso8601==9.0.1
 attrs==21.2.0

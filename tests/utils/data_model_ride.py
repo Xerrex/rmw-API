@@ -1,8 +1,9 @@
 from copy import deepcopy
 from datetime import datetime, timedelta
-from app.data.models import User, Ride
 
-DT_FORMAT = '%Y-%m-%d %H:%M:%S.%f' # 2021-08-04 05:35:08.817837
+from tests.utils.helpers import DT_FORMAT, create_user, create_ride
+
+
 depart_time = datetime.utcnow() + timedelta(days=1)
 end_time = datetime.utcnow() + timedelta(days=2)
 
@@ -23,14 +24,9 @@ ride_update['vehicle_plate'] = 'KHH 300'
 ride_update['depart_time'] = f'{update_dtime.strftime(DT_FORMAT)}'
 ride_update['end_time'] = f'{update_etime.strftime(DT_FORMAT)}'
 
-def create_user(name, username, email,password):
-    """Create a user
-    """
-    return User(name, username, email, password)
+
+owner = create_user("Bob Developer", "bobdev", "bobdev@api.com", 'qwerty12345')
 
 
-def create_ride(owner):
-    """Create a ride
-    """
-    return Ride(owner, **ride_data)
-
+def create_test_ride(owner):
+    return create_ride(owner, ride_data)
