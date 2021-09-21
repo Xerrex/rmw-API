@@ -65,7 +65,6 @@ class RideNameSpaceCase(ApiBaseTestCase):
         self.assertIsNotNone(res_json)
         self.assertEqual(1, res_json[0]['id'])
 
-    
     def test_get_a_ride(self):
         """Test fetching a single ride
         """
@@ -76,7 +75,6 @@ class RideNameSpaceCase(ApiBaseTestCase):
         self.assertEqual(res.status_code, 200)
         self.assertEqual(res_json['id'], 1)
         self.assertEqual(res_json['vehicle_plate'], ride_data['vehicle_plate'])
-
 
     def test_updating_ride(self):
         """Test updating ride details

@@ -3,6 +3,7 @@ from http import HTTPStatus
 from flask_restx import abort
 from .models import Ride
 
+DT_FORMAT = '%Y-%m-%d %H:%M:%S.%f' # 2021-08-04 05:35:08.817837
 
 def get_all_rides():
     """Fetches all rides
@@ -57,7 +58,7 @@ def check_active_ride(owner, depart_time):
         ttime (DateTime): time to compare with values in the endtime
     """
     for ride  in Ride.query.filter_by(created_by=owner):
-        if ride.end_time > depart_time:
+        if ride.end_time > datetime.strptime(depart_time, DT_FORMAT):
             return True
     return None
 
@@ -86,7 +87,7 @@ def abort_not_ride_owner(rideID, user):
     of the ride
     """
     ride = get_ride_by_id(rideID)
-    if ride.user_id != user:
+    if ride.created_by != user:
         msg = 'Your are not authorized to view requests'
         abort(HTTPStatus.UNAUTHORIZED, message=msg)
 
@@ -96,6 +97,6 @@ def abort_ride_owner(rideID, user):
     to his own ride
     """
     ride = get_ride_by_id(rideID)
-    if ride.user_id == user:
+    if ride.created_by == user:
         msg = 'Prohibited to join your own ride'
         abort(HTTPStatus.BAD_REQUEST, message=msg)
