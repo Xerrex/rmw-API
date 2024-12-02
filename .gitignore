@@ -1,7 +1,14 @@
-.vscode/
-venv/
-*.pyc
+# Byte-compiled / optimized / DLL files
 __pycache__/
+*.py[cod]
+*$py.class
+
+# app:
+app.db
+
+
+# Environments
 .env
-db/
+env/
+venv/
 scrap_yard/

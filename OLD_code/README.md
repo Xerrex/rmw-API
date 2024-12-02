@@ -7,7 +7,7 @@
 * The API is developed in Python/Flask. Consuming the API can be done with any other tech stack that can process JSON endpoints.
 
 ## Tools used:
-* Python/FastAPI
+* Python/Flask
 * Object Relation Mapper(ORM)
 
 ## Table of Contents
@@ -65,7 +65,7 @@ The commands are from a bash terminal
     ```
 * Run the App.
     ```
-    fastapi dev main.py
+    flask run
     ```
 * View the App.
     * Head over to the Address provided at the terminal
