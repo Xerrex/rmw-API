@@ -12,6 +12,7 @@
 * **[Virtualenv](https://virtualenv.pypa.io/en/stable/)** - A tool to create isolated virtual environments
 * **[SQLITE](https://www.sqlite.org/index.html)** - Small, fast, self-contained, high-reliability, full-featured, SQL DB.
 * **[Docker](https://www.docker.com/) / [Docker-compose](https://docs.docker.com/compose/)** - Set of platform as a service products that use OS-level virtualization to deliver software in packages called containers.
+* **[Alembic](https://alembic.sqlalchemy.org/en/latest/index.html)** is a lightweight database migration tool for usage with the SQLAlchemy Database Toolkit.
 
 
 ## Table of Contents
