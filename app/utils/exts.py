@@ -3,6 +3,7 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_jwt_extended import JWTManager
+from flask_cors import CORS
 
 db = SQLAlchemy()
 jwt = JWTManager()
@@ -16,5 +17,7 @@ def ext_init_app(app: Flask):
     db.init_app(app)
     Migrate(app, db) # handle db migrations
     jwt.init_app(app)# Handles the JWT
+    CORS(app, resources={r"/*": {"origins": "*"}})
+
     
     
