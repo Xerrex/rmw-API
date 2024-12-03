@@ -1,6 +1,11 @@
 from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from db.models import Base
+from db.db_setup import engine
+
+
+Base.metadata.create_all(bind=engine)
 
 
 API_TITLE = "RMW-API"

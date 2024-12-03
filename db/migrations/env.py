@@ -18,13 +18,13 @@ if config.config_file_name is not None:
 # for 'autogenerate' support
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
-from db.db_setup import Base
-from db.db_setup import SQLALCHEMY_DATABASE_URL
+from db.models import Base
+from db.db_setup import SQLALCHEMY_DATABASE_URI
 
 target_metadata = Base.metadata
 
 def get_url():
-    return SQLALCHEMY_DATABASE_URL
+    return SQLALCHEMY_DATABASE_URI
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:

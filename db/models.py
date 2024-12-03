@@ -1,53 +1,73 @@
+from datetime import datetime, timezone
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
+from sqlalchemy.orm import relationship
 from .db_setup import Base
 
 
 class User(Base):
     """User
     """
+    
+    __tablename__ = "users"
 
-    # id = db.Column(db.Integer, primary_key=True)
-    # name = db.Column(db.String(255), nullable=False)
-    # username = db.Column(db.String(120), unique=True, nullable=False)
-    # email = db.Column(db.String(255), unique=True, nullable=False)
-    # password = db.Column(db.String(255), nullable=False)
-    # last_login = db.Column(db.DateTime, default=datetime.utcnow)
-    # created_at
-    # updated_at
-    # rides = db.relationship('Ride', backref='owner', lazy=True)
-    # ride_requests = db.relationship('RideRequest', backref='passenger', lazy=True)
+    id = Column(Integer, primary_key=True)
+    first_name =  Column(String(20), nullable=False)
+    last_name = Column(String(20), nullable=False)
+    username = Column(String(20), nullable=False)
+    email = Column(String(100), nullable=False, unique=True, index=True)
+    password = Column(String, nullable=False)
+   
+    created_at = Column(DateTime(timezone=True), default=datetime.now(timezone.utc))
+    updated_at = Column(DateTime(timezone=True), default=datetime.now(timezone.utc), onupdate=datetime.now(timezone.utc))
+    
+    rides = relationship("Ride", back_populates="owner", cascade="all, delete-orphan")
+
+    ride_requests = relationship('RideRequest',  back_populates="ride_requester", cascade="all, delete-orphan")
 
 
-    # TODO: Token generation and verification
-    pass
+    # TODO: Add Token generation and verification
 
 
 class Ride(Base):
     """Ride
     """
-    # id = db.Column(db.Integer, primary_key=True)
-    # vehicle_plate = db.Column(db.String(15), nullable=False)
-    # seats = db.Column(db.Integer, nullable=False)
-    # town_from = db.Column(db.String(80), nullable=False)
-    # town_to = db.Column(db.String(80), nullable=False)
-    # depart_time = db.Column(db.DateTime, nullable=False)
-    # end_time = db.Column(db.DateTime, nullable=False)
-    # created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    # updated_at 
-    # created_by = db.Column(db.Integer, db.ForeignKey('user.id'),nullable=False)
-    # ride_requests = db.relationship('RideRequest', backref='ride', lazy=True)
-    pass
+
+    __tablename__ = "rides"
+
+    id = Column(Integer, primary_key=True)
+    vehicle_plate = Column(String(20), nullable=False)
+    seats = Column(Integer, nullable=False)
+    town_starting = Column(String(80), nullable=False)
+    town_ending = Column(String(80), nullable=False)
+    depart_time = Column(DateTime(timezone=True), nullable=False)
+    end_time = Column(DateTime(timezone=True), nullable=False)
+
+    created_at = Column(DateTime(timezone=True), default=datetime.now(timezone.utc))
+    updated_at = Column(DateTime(timezone=True), default=datetime.now(timezone.utc), onupdate=datetime.now(timezone.utc))
+
+    owner_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    owner = relationship("User", back_populates="rides") # Relationship: back reference to the user
+   
+    ride_requests = relationship("RideRequest", back_populates="ride", cascade="all, delete-orphan")
 
 
 class RideRequest(Base):
     """Ride Request 
     """
 
-    # id = db.Column(db.Integer,primary_key=True)
-    # ride_id = db.Column(db.Integer, db.ForeignKey('ride.id'), nullable='False')
-    # user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable='False')
-    # seats = db.Column(db.Integer, nullable=False, default=1)
-    # stop = db. Column(db.String(25), default='Ride Destination', nullable=False)
-    # status = db.Column(db.String(9), nullable='False', default='Pending') # Accepted/Rejected
-    # created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    # updated_at 
-    pass
+    __tablename__ = "rideRequests"
+
+    id = Column(Integer, primary_key=True)
+    seats = Column(Integer, nullable=False, default=1)
+    stop = Column(String(80), default='Ride Destination', nullable=False)
+    status = Column(String(10), default='Pending', nullable=False) # Accepted/Rejected
+
+    created_at = Column(DateTime(timezone=True), default=datetime.now(timezone.utc))
+    updated_at = Column(DateTime(timezone=True), default=datetime.now(timezone.utc), onupdate=datetime.now(timezone.utc))
+
+    ride_id = Column(Integer, ForeignKey("rides.id", ondelete="CASCADE"), nullable=False)
+    ride = relationship("Ride", back_populates="ride_requests") # Relationship: back reference to the ride
+
+    ride_requester_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    ride_requester = relationship("User", back_populates="ride_requests") # Relationship: back reference to the user
+
