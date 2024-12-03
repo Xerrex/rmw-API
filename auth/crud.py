@@ -16,7 +16,7 @@ def create_user(userData:SignUpSchema,  db:Session):
     user = User()
     user.first_name = userData.first_name
     user.last_name = userData.last_name
-    user. username = userData.username
+    user.email = userData.email
     user.password = userData.password #TODO: has password
     db.add(user)
     db.commit()

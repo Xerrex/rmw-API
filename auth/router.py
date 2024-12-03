@@ -21,7 +21,7 @@ def signUp(signUpData: SignUpSchema, db:Session = Depends(get_db)):
         detail = f"User with email {signUpData.email} exists"
         raise HTTPException(status_code=409, detail=detail)
 
-    new_user = create_user(user_data=signUpData, db=db)
+    new_user = create_user(userData=signUpData, db=db)
     if new_user:
         return {
             "message": "Successful sign up",
@@ -36,6 +36,9 @@ def signUp(signUpData: SignUpSchema, db:Session = Depends(get_db)):
 
 @router.post("/signin")
 def signIn():
+    """Sign in
+    Assigns an already signed up user a auth token for session  management.
+    """
     return {
         "message": "sign in"
     }
