@@ -1,3 +1,4 @@
+import uuid
 from datetime import datetime, timezone
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
@@ -11,9 +12,10 @@ class User(Base):
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True)
+    uuid = Column(String(36), unique=True, default=lambda: str(uuid.uuid4()))
     first_name =  Column(String(20), nullable=False)
     last_name = Column(String(20), nullable=False)
-    username = Column(String(20), nullable=False)
+    # username = Column(String(20), nullable=True) # TODO: consider adding later
     email = Column(String(100), nullable=False, unique=True, index=True)
     password = Column(String, nullable=False)
    
@@ -35,6 +37,7 @@ class Ride(Base):
     __tablename__ = "rides"
 
     id = Column(Integer, primary_key=True)
+    uuid = Column(String(36), unique=True, default=lambda: str(uuid.uuid4()))
     vehicle_plate = Column(String(20), nullable=False)
     seats = Column(Integer, nullable=False)
     town_starting = Column(String(80), nullable=False)
@@ -58,6 +61,7 @@ class RideRequest(Base):
     __tablename__ = "rideRequests"
 
     id = Column(Integer, primary_key=True)
+    uuid = Column(String(36), unique=True, default=lambda: str(uuid.uuid4()))
     seats = Column(Integer, nullable=False, default=1)
     stop = Column(String(80), default='Ride Destination', nullable=False)
     status = Column(String(10), default='Pending', nullable=False) # Accepted/Rejected
