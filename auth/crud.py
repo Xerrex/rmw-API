@@ -34,3 +34,18 @@ def get_user_by_email(email:EmailStr, db:Session):
     """
     user = db.query(User).filter(User.email == email).first()
     return user
+
+
+def get_user_by_uuid(uuid: str, db:Session)-> User:
+    """Get user by uuid
+
+    Args:
+        uuid (str): A string representing a uuid 
+        db (Session): Database session
+
+    Returns:
+        User: A database model representing a user.
+    """
+
+    user = db.query(User).filter(User.uuid == uuid).first()
+    return user

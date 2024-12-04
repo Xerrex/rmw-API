@@ -1,4 +1,9 @@
+from datetime import datetime, timedelta, timezone
+from typing import Optional
+from fastapi import HTTPException, status
 from passlib.context import CryptContext
+from jose import jwt, JWTError
+from config import TOKEN_ALGORITHM, TOKEN_EXPIRY_MINUTES, SECRET_KEY
 
 
 #TODO: Consider context saving/updating
@@ -31,35 +36,52 @@ def verify_password(password: str, password_hash: str)-> bool:
 
 
 
-def generate_access_token(payload: dict, time_to_expiry=1)-> str:
+def generate_access_token(user_data: str, 
+                          time_to_expiry: Optional[timedelta] = TOKEN_EXPIRY_MINUTES)-> str:
     """Generate access token
 
     Create a secure access token for authentication and authorization.
 
     Args:
-        payload (dict): The claims to include in the token (e.g., user ID, roles).
-        time_to_expiry (int, optional): The token's expiration time in seconds.
+        user_data (str): The claims to include in the token (e.g., user ID, roles).
+        time_to_expiry (timedelta, optional): The token's expiration time in seconds.
 
     Returns:
         str: A JSON Web Token (JWT) or similar token string, encoded and signed.
     """
-    pass
+   
+    issued_at =  datetime.now(timezone.utc)
+    expire  = issued_at + timedelta(minutes=time_to_expiry)
+    payload = {
+        "sub": user_data,
+        "exp": expire,
+        "iat": issued_at
+    }
+    
+    return jwt.encode(payload, SECRET_KEY, algorithm=TOKEN_ALGORITHM)
 
 
-def decode_access_token(token: str, secret_key: str)-> dict:
+def decode_access_token(token: str)-> str:
     """Decode access token
 
     Verifies an access token to extract its payload.
 
     Args:
         token (str):  The encoded access token (e.g., a JSON Web Token).
-        secret_key (str): The secret key used to verify the token's signature.
     Returns:
-        dict: The decoded payload (claims) of the token, such as user ID and roles.
-    
-    Raises:
-        ValueError: If the token is invalid or the signature verification fails.
-        ExpiredSignatureError: If the token has expired.
-        DecodeError: If the token cannot be decoded due to format or corruption.
+        str: The decoded user_data (claims["sub"]) of the token, such as user ID and roles.
     """
-    pass
+    
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[TOKEN_ALGORITHM])
+        user_data = payload.get("sub")
+        if user_data is None:
+            raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    details="You are not authorized.")
+        
+    except JWTError:
+        raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    details="You are not authorized, error.")
+    return user_data

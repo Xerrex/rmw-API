@@ -6,4 +6,6 @@ alembic
 
 email-validator
 
+# security
 passlib[bcrypt]
+python-jose
