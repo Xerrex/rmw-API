@@ -3,8 +3,8 @@ from sqlalchemy.orm import Session
 from db.db_deps import get_db
 from .schemas import SignUpSchema, SignInSchema, PasswordResetSchema, PasswordSetSchema
 from .crud import create_user, get_user_by_email, update_user_password
-from .security import verify_password, generate_access_token, decode_access_token
-
+from .handler_password import verify_password
+from .handler_token import generate_access_token, decode_access_token
 
 
 router = APIRouter()

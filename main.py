@@ -1,9 +1,12 @@
 from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+
 from db.models import Base
 from db.db_setup import engine
+
 from auth import router as Auth_router
+from user import router as User_router
 
 
 Base.metadata.create_all(bind=engine)
@@ -25,3 +28,4 @@ def home(request: Request):
 
 
 app.include_router(Auth_router, prefix="/auth", tags=["Auth"])
+app.include_router(User_router, prefix="/user", tags=["User"])

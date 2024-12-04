@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 from db.models import User
 from .schemas import SignUpSchema, EmailStr
-from .security import generate_password_hash
+from .handler_password import generate_password_hash
 
 
 
