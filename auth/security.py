@@ -27,7 +27,7 @@ def verify_password(password: str, password_hash: str)-> bool:
 
     Args:
         password (str): plain text to generate a hash on.
-        password_hash (str): hashed representation of the password
+        password_hash (str): hashed representation of the password.
     
     Returns:
         bool: True if the password matches the hash, False otherwise.
@@ -57,7 +57,7 @@ def generate_access_token(user_data: str,
         "exp": expire,
         "iat": issued_at
     }
-    
+
     return jwt.encode(payload, SECRET_KEY, algorithm=TOKEN_ALGORITHM)
 
 

@@ -2,8 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from db.db_deps import get_db
 from .schemas import SignUpSchema, SignInSchema, PasswordResetSchema, PasswordSetSchema
-from .crud import create_user, get_user_by_email
-from .security import verify_password, generate_access_token
+from .crud import create_user, get_user_by_email, update_user_password
+from .security import verify_password, generate_access_token, decode_access_token
 
 
 
@@ -19,13 +19,13 @@ def signUp(signUpData: SignUpSchema, db:Session = Depends(get_db)):
     user = get_user_by_email(email=signUpData.email, db=db)
 
     if user:
-        detail = f"User with email {signUpData.email} exists"
+        detail = f"User with email {signUpData.email} exists."
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=detail)
 
     new_user = create_user(userData=signUpData, db=db)
     if new_user:
         return {
-            "message": "Successful sign up",
+            "message": "Successful sign up.",
             "details": {
                 "first_name": new_user.first_name,
                 "last_name": new_user.last_name,
@@ -43,17 +43,17 @@ def signIn(signInData: SignInSchema, db:Session = Depends(get_db)):
     user = get_user_by_email(email=signInData.email, db=db)
 
     if not user:
-        detail = f"User with email {signInData.email} does not exists"
+        detail = f"User with email {signInData.email} does not exists."
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=detail)
     
     if not verify_password(signInData.password, user.password):
-        detail = f"Invalid with email or password"
+        detail = f"Invalid with email or password."
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=detail)
     
-    access_token = generate_access_token(user.uuid)
+    access_token = generate_access_token(user_data=user.uuid)
 
     return {
-        "message": "Successful sign in",
+        "message": "Successful sign in.",
         "details": {
             "uuid": user.uuid,
             "first_name": user.first_name,
@@ -76,26 +76,31 @@ def reset_password(resetData: PasswordResetSchema, db:Session = Depends(get_db))
 
     user = get_user_by_email(email=resetData.email, db=db)
     if not user:
-        detail = f"User with email {resetData.email} does not exists"
-        raise HTTPException(status_code=404, detail=detail)
+        detail = f"User with email {resetData.email} does not exists."
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=detail)
     
-    # TODO: create reset-token
-    reset_token = ""
+    reset_token = generate_access_token(user_data=user.uuid)
 
     # TODO: send email
 
     return {
-        "message": "Password reset was successfully initiated",
+        "message": "Password reset was successfully initiated.",
         "details": {
-            "reset_link": f"/auth/set-password/{reset_token}"
+            "reset_token": reset_token
         }
     }
 
 
 @router.put("/set-password/{reset_token}")
 def set_password(reset_token: str, setPasswordData:PasswordSetSchema, db:Session = Depends(get_db)):
-    # TODO: Decode token
+    
+    if setPasswordData.password != setPasswordData.confirm_password:
+        detail = f"Password and confirm password do no match."
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=detail)
+    
+    user_uuid = decode_access_token(token=reset_token)
+    user = update_user_password(uuid=user_uuid, password=setPasswordData.password, db=db)
 
     return {
-        "message": "set password"
+        "message": f"Password was successfully for '{user.email}'."
     }
