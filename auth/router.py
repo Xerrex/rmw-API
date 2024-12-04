@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from db.db_deps import get_db
-from .schemas import SignUpSchema, SignInSchema
+from .schemas import SignUpSchema, SignInSchema, PasswordResetSchema, PasswordSetSchema
 from .crud import create_user, get_user_by_email
 
 
@@ -35,24 +35,57 @@ def signUp(signUpData: SignUpSchema, db:Session = Depends(get_db)):
 
 
 @router.post("/signin")
-def signIn():
+def signIn(signInData: SignInSchema, db:Session = Depends(get_db)):
     """Sign in
     Assigns an already signed up user a auth token for session  management.
     """
-    return {
-        "message": "sign in"
-    }
+    user = get_user_by_email(email=signInData.email, db=db)
+
+    if not user:
+        detail = f"User with email {signInData.email} does not exists"
+        raise HTTPException(status_code=404, detail=detail)
+    
+    if user.password == signInData.password:
+        return {
+            "message": "Successful sign in",
+            "details": {
+                "uuid": user.uuid,
+                "first_name": user.first_name,
+                "last_name": user.last_name,
+                "email": user.email
+            }
+        }
 
 
 @router.post("/reset-password")
-def reset_password():
+def reset_password(resetData: PasswordResetSchema, db:Session = Depends(get_db)):
+    """Reset Password
+
+    Initiates account password resetting.
+    """
+
+    user = get_user_by_email(email=resetData.email, db=db)
+    if not user:
+        detail = f"User with email {resetData.email} does not exists"
+        raise HTTPException(status_code=404, detail=detail)
+    
+    # TODO: create reset-token
+    reset_token = ""
+    
+    # TODO: send email
+
     return {
-        "message": "reset password"
+        "message": "Password reset was successfully initiated",
+        "details": {
+            "reset_link": f"/auth/set-password/{reset_token}"
+        }
     }
 
 
-@router.put("/set-password")
-def set_password():
+@router.put("/set-password/{reset_token}")
+def set_password(reset_token: str, setPasswordData:PasswordSetSchema, db:Session = Depends(get_db)):
+    # TODO: Decode token
+
     return {
         "message": "set password"
     }
