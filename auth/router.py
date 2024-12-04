@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from db.db_deps import get_db
 from .schemas import SignUpSchema, SignInSchema, PasswordResetSchema, PasswordSetSchema
 from .crud import create_user, get_user_by_email
+from .security import verify_password
 
 
 
@@ -45,7 +46,8 @@ def signIn(signInData: SignInSchema, db:Session = Depends(get_db)):
         detail = f"User with email {signInData.email} does not exists"
         raise HTTPException(status_code=404, detail=detail)
     
-    if user.password == signInData.password:
+    if verify_password(signInData.password, user.password):
+        
         return {
             "message": "Successful sign in",
             "details": {
@@ -71,7 +73,7 @@ def reset_password(resetData: PasswordResetSchema, db:Session = Depends(get_db))
     
     # TODO: create reset-token
     reset_token = ""
-    
+
     # TODO: send email
 
     return {

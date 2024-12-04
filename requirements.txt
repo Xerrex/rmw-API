@@ -1,5 +1,9 @@
 fastapi[standard]
-SQLAlchemy
 python-dotenv
+
+SQLAlchemy
 alembic
+
 email-validator
+
+passlib[bcrypt]

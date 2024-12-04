@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 from db.models import User
 from .schemas import SignUpSchema, EmailStr
+from .security import generate_password_hash
 
 
 
@@ -17,7 +18,7 @@ def create_user(userData:SignUpSchema,  db:Session):
     user.first_name = userData.first_name
     user.last_name = userData.last_name
     user.email = userData.email
-    user.password = userData.password #TODO: has password
+    user.password = generate_password_hash(userData.password)
     db.add(user)
     db.commit()
     db.refresh(user)
