@@ -7,6 +7,7 @@ from db.db_setup import engine
 
 from auth import router as Auth_router
 from user import router as User_router
+from rides import router as Ride_router
 
 
 Base.metadata.create_all(bind=engine)
@@ -29,3 +30,4 @@ def home(request: Request):
 
 app.include_router(Auth_router, prefix="/auth", tags=["Auth"])
 app.include_router(User_router, prefix="/user", tags=["User"])
+app.include_router(Ride_router, prefix="/rides", tags=["Ride"])

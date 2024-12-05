@@ -11,11 +11,11 @@ def create_user(userData:SignUpSchema,  db:Session)-> User:
     saves a new user to the database.
 
     Args:
-        userData (SignUpSchema): Data to create a user
-        db (Session): Database session
+        userData (SignUpSchema): Data to create a user.
+        db (Session): Database session.
 
     Returns:
-        User: A database model representing a user.
+        User: A database object representing a user.
     """
     user = User()
     user.first_name = userData.first_name
@@ -29,14 +29,14 @@ def create_user(userData:SignUpSchema,  db:Session)-> User:
 
 
 def get_user_by_email(email:EmailStr, db:Session)-> User:
-    """get_user
+    """Get_user
 
     Args:
-        email (EmailStr): email of a user
-        db (Session): Database session
+        email (EmailStr): email of a user.
+        db (Session): Database session.
     
     Returns:
-        User: A database model representing a user.
+        User: A database object representing a user.
     """
     user = db.query(User).filter(User.email == email).first()
     return user
@@ -46,11 +46,11 @@ def get_user_by_uuid(uuid: str, db:Session)-> User:
     """Get user by uuid
 
     Args:
-        uuid (str): A string representing a uuid .
+        uuid (str): A string representing a uuid.
         db (Session): Database session.
 
     Returns:
-        User: A database model representing a user.
+        User: A database object representing a user.
     """
 
     user = db.query(User).filter(User.uuid == uuid).first()
@@ -66,7 +66,7 @@ def update_user_password(uuid: str, password: str, db:Session)-> User:
         db (Session): Database session.
     
     Returns:
-        User: A database model representing a user.
+        User: A database object representing a user.
     """
 
     user = get_user_by_uuid(uuid=uuid, db=db)
