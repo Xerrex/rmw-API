@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from db.models import Ride
-from .schemas_rides import RideCreateSchema
+from .schemas_rides import RideCreateSchema, RideUpdateSchema
 
 
 def get_rides(db: Session, skip: int=0, limit: int=5000):
@@ -60,3 +60,27 @@ def create_ride(owner_id: int, rideData: RideCreateSchema, db:Session):
     db.commit()
     db.refresh(new_ride)
     return new_ride
+
+
+def update_ride(ride: Ride, rideData:RideUpdateSchema, db:Session):
+    """Update a ride
+
+    Args:
+        ride (Ride): A database object representing a ride.
+        rideData (RideUpdateSchema): Data to update a ride.
+        db (Session): Database session.
+    Returns:
+        Ride: A database object representing a ride.
+    """
+
+    ride.seats = rideData.seats
+    ride.town_starting = rideData.town_starting
+    ride.town_ending = rideData.town_ending
+    ride.depart_time = rideData.depart_time
+    ride.end_time = rideData.end_time
+
+    db.add(ride)
+    db.commit()
+    db.refresh(ride)
+    return ride
+   

@@ -1,10 +1,13 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from auth.deps_auth import get_current_user
 from auth.schemas import UserSchema
 from db.db_deps import get_db
-from .crud_rides import get_rides, create_ride, get_ride_by_uuid
-from .schemas_rides import RidesSchema, RideCreateSchema, RideSchema
+from .crud_rides import get_rides, create_ride, get_ride_by_uuid, \
+    update_ride
+
+from .schemas_rides import RidesSchema, RideCreateSchema, RideSchema, \
+    RideUpdateSchema
 
 
 router = APIRouter()
@@ -19,7 +22,8 @@ def get_all_rides(db:Session = Depends(get_db), _: any = Depends(get_current_use
 
 
 @router.post("/", response_model=RideSchema)
-def create_new_ride(rideData: RideCreateSchema, db:Session = Depends(get_db), current_user: UserSchema = Depends(get_current_user)):
+def create_new_ride(rideData: RideCreateSchema, db:Session = Depends(get_db), 
+                        current_user: UserSchema = Depends(get_current_user)):
     """Create a new ride
     """
     ride = create_ride(owner_id=current_user.id, rideData=rideData, db=db)
@@ -34,12 +38,25 @@ def get_ride(ride_uuid: str, db:Session = Depends(get_db), _: any = Depends(get_
     return ride
 
 
-@router.put("/{ride_uuid}")
-def update_ride_details(ride_uuid: str, db:Session = Depends(get_db), 
-                        current_user: UserSchema = Depends(get_current_user)):
+@router.put("/{ride_uuid}", response_model=RideSchema)
+def update_ride_details(ride_uuid: str, rideData: RideUpdateSchema, 
+                        db:Session = Depends(get_db), current_user: UserSchema = Depends(get_current_user)):
     """Update the details of a ride
     """
-    pass
+    ride = get_ride_by_uuid(ride_uuid, db=db)
+
+    if not ride:
+        detail = f"Ride with uuid: '{ride_uuid}' does not exists."
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=detail)
+    
+    if ride.owner_id != current_user.id:
+        detail = "You are not authorized to update ride."
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=detail)
+    
+    updated_ride = update_ride(ride=ride, rideData=rideData, db=db)
+
+    return updated_ride
+
 
 
 @router.get("/{ride_uuid}/requests")
