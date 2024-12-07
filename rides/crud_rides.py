@@ -7,7 +7,7 @@ def get_rides(db: Session, skip: int=0, limit: int=5000):
     """Get all rides
 
     Args:
-        db (Session): Database session
+        db (Session): Database session.
         skip (int, optional): The number of records to skip. Defaults to 0.
         limit (int, optional): The maximum number of records to retrieve. Defaults to 5000.
     

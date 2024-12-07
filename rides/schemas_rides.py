@@ -17,7 +17,7 @@ class RideSchema(BaseModel):
     owner_id: int
     
     model_config = ConfigDict(
-        from_attributes=True,  # Enable compatibility with ORM models
+        from_attributes=True,
         json_encoders={
             datetime: lambda v: v.strftime("%d-%m-%Y %H:%M")  # Custom datetime serialization
         },
