@@ -14,13 +14,6 @@
   <nav class="blue-grey" role="navigation">
     <div class="nav-wrapper container">
     <a id="logo-container" href="#" class="brand-logo">{{ title }}</a>
-      <ul class="right hide-on-med-and-down">
-        {% include 'nav_links.html' %}
-      </ul>
-      
-      <ul id="nav-mobile" class="sidenav">
-        {% include 'nav_links.html' %}
-      </ul>
 
       <a href="#" data-target="nav-mobile" class="sidenav-trigger">
         <i class="material-icons">menu</i>
@@ -42,6 +35,10 @@
         <a href="/docs" id="documentation-btn" 
           class="btn-large waves-effect waves-light orange" target="_blank">
           <b>Documentation</b>
+        </a>
+        <a href="/redoc" id="documentation-btn" 
+          class="btn-large waves-effect waves-light green" target="_blank">
+          <b>Alternate Documentation</b>
         </a>
         <a href="https://github.com/Xerrex/rmw-API" id="view-code-btn" 
           class="btn-large waves-effect waves-light orange" target="_blank">
