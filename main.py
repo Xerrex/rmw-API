@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from fastapi.middleware.cors import CORSMiddleware
 
 from db.models import Base
 from db.db_setup import engine
@@ -8,6 +9,8 @@ from db.db_setup import engine
 from auth import router as Auth_router
 from user import router as User_router
 from rides import router as Ride_router
+
+from config import CORS_ORIGINS
 
 
 Base.metadata.create_all(bind=engine)
@@ -18,6 +21,16 @@ API_DESCRIPTION = "Ride my way"
 API_VERSION = "1.1"
 
 app = FastAPI(title=API_TITLE, description=API_DESCRIPTION, version=API_VERSION)
+
+
+# Setup cors
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=CORS_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")

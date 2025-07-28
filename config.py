@@ -13,3 +13,6 @@ DATABASE_CONNECT_ARGS = {"check_same_thread": False} if ENVIRONMENT=="DEV" else 
 SECRET_KEY = os.getenv("SECRET_KEY", "01cbdc2656463a93819efe9030237ae0f7")
 TOKEN_ALGORITHM = "HS256"
 TOKEN_EXPIRY_MINUTES = 60
+CORS_ORIGINS = [
+    "http://localhost:5173"
+]
