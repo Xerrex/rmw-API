@@ -10,7 +10,8 @@ from auth import router as Auth_router
 from user import router as User_router
 from rides import router as Ride_router
 
-from config import CORS_ORIGINS
+from config import ALLOWED_ORIGINS
+
 
 
 Base.metadata.create_all(bind=engine)
@@ -26,7 +27,7 @@ app = FastAPI(title=API_TITLE, description=API_DESCRIPTION, version=API_VERSION)
 # Setup cors
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=CORS_ORIGINS,
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
