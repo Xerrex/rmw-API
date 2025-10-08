@@ -48,10 +48,10 @@ def decode_access_token(token: str)-> str:
         if user_data is None:
             raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
-                    details="You are not authorized.")
+                    detail="You are not authorized.")
         
     except JWTError:
         raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
-                    details="You are not authorized, error.")
+                    detail="You are not authorized, error.")
     return user_data

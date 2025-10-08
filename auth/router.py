@@ -47,7 +47,7 @@ def signIn(signInData: SignInSchema, db:Session = Depends(get_db)):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=detail)
     
     if not verify_password(signInData.password, user.password):
-        detail = f"Invalid with email or password."
+        detail = "Invalid email or password."
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=detail)
     
     access_token = generate_access_token(user_data=user.uuid)
