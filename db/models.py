@@ -1,7 +1,8 @@
 import uuid
 from datetime import datetime, timezone
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Boolean
 from sqlalchemy.orm import relationship
+from sqlalchemy.sql import func
 from .db_setup import Base
 
 
@@ -18,16 +19,26 @@ class User(Base):
     # username = Column(String(20), nullable=True) # TODO: consider adding later
     email = Column(String(100), nullable=False, unique=True, index=True)
     password = Column(String, nullable=False)
-   
+
     created_at = Column(DateTime(timezone=True), default=datetime.now(timezone.utc))
     updated_at = Column(DateTime(timezone=True), default=datetime.now(timezone.utc), onupdate=datetime.now(timezone.utc))
     
     rides = relationship("Ride", back_populates="owner", cascade="all, delete-orphan")
-
     ride_requests = relationship('RideRequest',  back_populates="ride_requester", cascade="all, delete-orphan")
+    refresh_tokens = relationship("RefreshToken", back_populates="user", cascade="all, delete-orphan")
 
 
-    # TODO: Add Token generation and verification
+class RefreshToken(Base):
+    __tablename__ = "refresh_tokens"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_uuid = Column(String(36), ForeignKey("users.uuid", ondelete="CASCADE"), nullable=False)
+    token = Column(String(255), unique=True, index=True, nullable=False)
+    expires_at = Column(DateTime(timezone=True), nullable=False)
+    is_revoked = Column(Boolean, default=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    user = relationship("User", back_populates="refresh_tokens")
 
 
 class Ride(Base):

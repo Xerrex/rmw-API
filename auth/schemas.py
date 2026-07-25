@@ -1,5 +1,6 @@
 from datetime import datetime
 from pydantic import BaseModel, EmailStr
+from typing import Optional
 
 
 class SignUpSchema(BaseModel):
@@ -12,7 +13,7 @@ class SignUpSchema(BaseModel):
 class SignInSchema(BaseModel):
     email: EmailStr
     password: str
-    remember: bool
+    remember: bool = False
 
 
 class PasswordResetSchema(BaseModel):
@@ -35,3 +36,26 @@ class UserSchema(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class SaveRefreshToken(BaseModel):
+    user_uuid: str
+    token: str
+    expires_at: datetime
+
+
+class RefreshTokenRequest(BaseModel):
+    refresh_token: str
+
+
+class TokenData(BaseModel):
+    access_token: str
+    refresh_token: str
+    token_type: str = 'bearer'
+
+
+class TokenResponseSchema(BaseModel):
+    message: str
+    action: str
+    success: bool
+    token: Optional[TokenData] = None
