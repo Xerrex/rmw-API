@@ -12,6 +12,7 @@ class SignUpSchema(BaseModel):
 class SignInSchema(BaseModel):
     email: EmailStr
     password: str
+    remember: bool
 
 
 class PasswordResetSchema(BaseModel):
@@ -20,7 +21,7 @@ class PasswordResetSchema(BaseModel):
 
 class PasswordSetSchema(BaseModel):
     password: str
-    confirm_password: str
+    # confirm_password: str
 
 
 class UserSchema(BaseModel):
