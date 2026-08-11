@@ -95,7 +95,7 @@ def signIn(signInData: SignInSchema, response: Response, db:Session = Depends(ge
             "success": True,
             # "user_id": user.id,
             # "uuid": user.uuid,
-            # "first_name": user.first_name,
+            "first_name": user.first_name,
             # "last_name": user.last_name,
             # "email": user.email,
             "token": {
@@ -202,7 +202,7 @@ async def logout(
     }
 
 
-@router.post("/reset-password")
+@router.post("/reset-password", status_code=status.HTTP_200_OK)
 def reset_password(resetData: PasswordResetSchema, db:Session = Depends(get_db)):
     """Reset Password
 
@@ -211,23 +211,24 @@ def reset_password(resetData: PasswordResetSchema, db:Session = Depends(get_db))
 
     user = get_user_by_email(email=resetData.email, db=db)
     if not user:
-        detail = {
-            "message": f"User with email {resetData.email} does not exists.",
-            "action": "Review the reset password",
-            "success": False
+        return {
+            "details": {
+                "message": "If an account with that email exists, a password reset link has been sent.",
+                "action": "Check your email for reset instructions.",
+                "success": True,
+            },
         }
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=detail)
     
-    reset_token = generate_access_token(user_data=user.uuid)
+    # reset_token = generate_access_token(user_data=user.uuid)
 
     # TODO: send email
 
     return {
         "details": {
-            "message": "Password reset was successfully initiated.",
-            "action": "Review your mail box",
+            "message": "If an account with that email exists, a password reset link has been sent.",
+            "action": "Check your email for reset instructions.",
             "success": True,
-            "reset_token": reset_token
+            # "reset_token": reset_token
         },
     }
 
@@ -258,3 +259,14 @@ def set_password(reset_token: str, setPasswordData:PasswordSetSchema, db:Session
             "success": True
         },
     }
+
+
+@router.get("/me")
+def get_user_details(current_user: UserSchema = Depends(get_current_user)):
+    """Get currently logged in user
+
+    Args:
+        current_user (UserSchema, optional): Details of the currently logged in user. Defaults to Depends(get_current_user).
+    """
+
+    return current_user;
