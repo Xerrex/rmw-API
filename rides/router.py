@@ -14,13 +14,14 @@ from .schemas_rides import RidesSchema, RideCreateSchema, RideSchema, \
     RideUpdateSchema
 from .schemas_rides_requests import Ride_RequestSchema, Ride_RequestCreateSchema, \
     Ride_RequestUpdateSchema
+from .helpers import serialize_ride, serialize_ride_request
 
 
 router = APIRouter()
 
 
 @router.get("/", response_model=RidesSchema)
-def get_all_rides(db: Session = Depends(get_db), _: any = Depends(get_current_user),
+def get_all_rides(db: Session = Depends(get_db), current_user: UserSchema = Depends(get_current_user),
                    page: int = Query(1, ge=1), limit: int = Query(10, ge=1, le=100),
                    search: Optional[str] = None, min_seats: Optional[int] = Query(None, ge=1),
                    date_from: Optional[datetime] = None, date_to: Optional[datetime] = None):
@@ -29,7 +30,8 @@ def get_all_rides(db: Session = Depends(get_db), _: any = Depends(get_current_us
     skip = (page - 1) * limit
     rides, total = get_rides(db=db, skip=skip, limit=limit, search=search,
                               min_seats=min_seats, date_from=date_from, date_to=date_to)
-    return {"rides": rides, "total": total, "page": page, "limit": limit}
+    serialized_rides = [serialize_ride(ride, current_user.id) for ride in rides]
+    return {"rides": serialized_rides, "total": total, "page": page, "limit": limit}
 
 
 
@@ -39,15 +41,20 @@ def create_new_ride(rideData: RideCreateSchema, db:Session = Depends(get_db),
     """Create a new ride
     """
     ride = create_ride(owner_id=current_user.id, rideData=rideData, db=db)
-    return ride
+    return serialize_ride(ride, current_user.id)
 
 
 @router.get("/{ride_uuid}", response_model=RideSchema)
-def get_ride(ride_uuid: str, db:Session = Depends(get_db), _: any = Depends(get_current_user)):
+def get_ride(ride_uuid: str, db:Session = Depends(get_db), current_user: UserSchema = Depends(get_current_user)):
     """Get ride
     """
     ride = get_ride_by_uuid(ride_uuid, db=db)
-    return ride
+
+    if not ride:
+        detail = f"Ride with uuid: '{ride_uuid}' does not exists."
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=detail)
+
+    return serialize_ride(ride, current_user.id)
 
 
 @router.put("/{ride_uuid}", response_model=RideSchema)
@@ -67,21 +74,27 @@ def update_ride_details(ride_uuid: str, rideData: RideUpdateSchema,
     
     updated_ride = update_ride(ride=ride, rideData=rideData, db=db)
 
-    return updated_ride
+    return serialize_ride(updated_ride, current_user.id)
 
 
 @router.get("/{ride_uuid}/requests", response_model=List[Ride_RequestSchema])
-def get_ride_requests(ride_uuid: str, db:Session = Depends(get_db), _: any = Depends(get_current_user)):
-    """Get requests on a ride
+def get_ride_requests(ride_uuid: str, db:Session = Depends(get_db), current_user: UserSchema = Depends(get_current_user)):
+    """Get requests on a ride.
+
+    Owners see every request made on their ride; passengers only see their own.
     """
     ride = get_ride_by_uuid(ride_uuid, db=db)
 
     if not ride:
         detail = f"Ride with uuid: '{ride_uuid}' does not exists."
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=detail)
-    
-    ride_requests = get_requests_on_ride(db=db, ride_id=ride.id)
-    return ride_requests
+
+    if ride.owner_id == current_user.id:
+        ride_requests = get_requests_on_ride(db=db, ride_id=ride.id)
+    else:
+        ride_requests = [req for req in ride.ride_requests if req.ride_requester_id == current_user.id]
+
+    return [serialize_ride_request(req) for req in ride_requests]
 
 
 
@@ -104,13 +117,13 @@ def make_ride_requests(ride_uuid: str, rideRequestData:Ride_RequestCreateSchema,
     ride_request = create_ride_request(db=db, ride_id=ride.id, ride_requester_id=current_user.id, 
                                        rideRequestData=rideRequestData)
     
-    return ride_request
+    return serialize_ride_request(ride_request)
     
     
 
 @router.get("/{ride_uuid}/requests/{request_uuid}", response_model=Ride_RequestSchema)
 def get_ride_request(ride_uuid: str, request_uuid: str, db:Session = Depends(get_db), 
-                                                    _: any = Depends(get_current_user)):
+                                                    current_user: UserSchema = Depends(get_current_user)):
     """get request on a ride..
     """
     ride = get_ride_by_uuid(ride_uuid, db=db)
@@ -125,8 +138,12 @@ def get_ride_request(ride_uuid: str, request_uuid: str, db:Session = Depends(get
     if not ride_request:
         detail = f"Ride request with uuid: '{request_uuid}' does not exists."
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=detail)
-    
-    return ride_request  
+
+    if current_user.id not in (ride.owner_id, ride_request.ride_requester_id):
+        detail = f"You are not authorized to view ride request: '{request_uuid}'"
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=detail)
+
+    return serialize_ride_request(ride_request)
 
 
 @router.put("/{ride_uuid}/requests/{request_uuid}", response_model=Ride_RequestSchema)
@@ -156,7 +173,7 @@ def update_ride_request_details(ride_uuid: str, request_uuid: str, rideRequestDa
 
     updated_ride_request = update_ride_request(db=db, ride_request=ride_request, 
                                                     rideRequestData=rideRequestData)
-    return updated_ride_request
+    return serialize_ride_request(updated_ride_request)
     
 
 
@@ -195,4 +212,4 @@ def update_ride_request_status(ride_uuid: str, request_uuid: str, rideRequestSta
     updated_ride_request = update_request_status(db=db, ride_request=ride_request, 
                                                 rideRequestStatus=rideRequestStatus)
     
-    return updated_ride_request
+    return serialize_ride_request(updated_ride_request)

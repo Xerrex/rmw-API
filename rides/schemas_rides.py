@@ -24,6 +24,11 @@ class RideSchema(BaseModel):
     status: RideStatus
     created_at: datetime
     updated_at: datetime
+    owner_name: Optional[str] = None
+    available_seats: int
+    is_owner: bool
+    pending_requests_count: Optional[int] = None
+    has_requested: Optional[bool] = None
     # owner_id: int
     
     model_config = ConfigDict(

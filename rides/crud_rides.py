@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Optional
 from sqlalchemy import or_
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload, selectinload
 from db.models import Ride
 from .schemas_rides import RideCreateSchema, RideUpdateSchema
 
@@ -23,7 +23,7 @@ def get_rides(db: Session, skip: int = 0, limit: int = 5000, search: Optional[st
     Returns:
         tuple[List[Ride], int]: A list of matching ride objects and the total match count.
     """
-    query = db.query(Ride)
+    query = db.query(Ride).options(selectinload(Ride.ride_requests), joinedload(Ride.owner))
 
     if search:
         like = f"%{search}%"
@@ -60,7 +60,9 @@ def get_ride_by_uuid(uuid: str, db:Session):
         Ride: A database object representing a ride.
     """
 
-    ride = db.query(Ride).filter(Ride.uuid == uuid).first()
+    ride = db.query(Ride).options(
+        selectinload(Ride.ride_requests), joinedload(Ride.owner)
+    ).filter(Ride.uuid == uuid).first()
     return ride
 
 

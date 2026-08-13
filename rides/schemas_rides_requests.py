@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Optional
 from pydantic import BaseModel, ConfigDict
 
 
@@ -21,7 +22,7 @@ class Ride_RequestSchema(BaseModel):
     ride_id: int
     # ride
     ride_requester_id: int
-    # ride_requester
+    requester_name: Optional[str] = None
 
     model_config = ConfigDict(
         from_attributes=True,
