@@ -1,21 +1,52 @@
+from datetime import datetime
+from typing import Optional
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 from db.models import Ride
 from .schemas_rides import RideCreateSchema, RideUpdateSchema
 
 
-def get_rides(db: Session, skip: int=0, limit: int=5000):
+def get_rides(db: Session, skip: int = 0, limit: int = 5000, search: Optional[str] = None,
+              min_seats: Optional[int] = None, date_from: Optional[datetime] = None,
+              date_to: Optional[datetime] = None):
     """Get all rides
 
     Args:
         db (Session): Database session.
         skip (int, optional): The number of records to skip. Defaults to 0.
         limit (int, optional): The maximum number of records to retrieve. Defaults to 5000.
+        search (str, optional): Matches against vehicle plate/model or town starting/ending.
+        min_seats (int, optional): Minimum number of available seats.
+        date_from (datetime, optional): Only rides departing on/after this datetime.
+        date_to (datetime, optional): Only rides departing on/before this datetime.
     
     Returns:
-        List[Ride]: A list of all rides objects in the database.
+        tuple[List[Ride], int]: A list of matching ride objects and the total match count.
     """
-    rides = db.query(Ride).order_by(Ride.id).offset(skip).limit(limit).all()
-    return(rides)
+    query = db.query(Ride)
+
+    if search:
+        like = f"%{search}%"
+        query = query.filter(or_(
+            Ride.vehicle_plate.ilike(like),
+            Ride.vehicle_model.ilike(like),
+            Ride.town_starting.ilike(like),
+            Ride.town_ending.ilike(like),
+        ))
+
+    if min_seats is not None:
+        query = query.filter(Ride.seats >= min_seats)
+
+    if date_from is not None:
+        query = query.filter(Ride.depart_time >= date_from)
+
+    if date_to is not None:
+        query = query.filter(Ride.depart_time <= date_to)
+
+    total = query.count()
+    rides = query.order_by(Ride.id).offset(skip).limit(limit).all()
+    return rides, total
+
 
 
 def get_ride_by_uuid(uuid: str, db:Session):

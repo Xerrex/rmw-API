@@ -53,6 +53,9 @@ class RideSchema(BaseModel):
 
 class RidesSchema(BaseModel):
     rides: List[RideSchema]
+    total: int
+    page: int
+    limit: int
 
 
 class RideDetailsSchema(BaseModel):

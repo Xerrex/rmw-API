@@ -1,5 +1,6 @@
-from typing import List
-from fastapi import APIRouter, Depends, HTTPException, status
+from typing import List, Optional
+from datetime import datetime
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 from auth.deps_auth import get_current_user
 from auth.schemas import UserSchema
@@ -19,11 +20,17 @@ router = APIRouter()
 
 
 @router.get("/", response_model=RidesSchema)
-def get_all_rides(db:Session = Depends(get_db), _: any = Depends(get_current_user)):
-    """Gets all rides
+def get_all_rides(db: Session = Depends(get_db), _: any = Depends(get_current_user),
+                   page: int = Query(1, ge=1), limit: int = Query(10, ge=1, le=100),
+                   search: Optional[str] = None, min_seats: Optional[int] = Query(None, ge=1),
+                   date_from: Optional[datetime] = None, date_to: Optional[datetime] = None):
+    """Gets all rides, optionally filtered and paginated.
     """
-    rides = get_rides(db=db)
-    return {"rides": rides}
+    skip = (page - 1) * limit
+    rides, total = get_rides(db=db, skip=skip, limit=limit, search=search,
+                              min_seats=min_seats, date_from=date_from, date_to=date_to)
+    return {"rides": rides, "total": total, "page": page, "limit": limit}
+
 
 
 @router.post("/", response_model=RideSchema)
