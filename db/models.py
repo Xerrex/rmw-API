@@ -50,18 +50,19 @@ class Ride(Base):
     id = Column(Integer, primary_key=True)
     uuid = Column(String(36), unique=True, default=lambda: str(uuid.uuid4()))
     vehicle_plate = Column(String(20), nullable=False)
+    vehicle_model = Column(String(80), nullable=False, server_default="")
     seats = Column(Integer, nullable=False)
     town_starting = Column(String(80), nullable=False)
     town_ending = Column(String(80), nullable=False)
     depart_time = Column(DateTime(timezone=True), nullable=False)
     end_time = Column(DateTime(timezone=True), nullable=False)
+    status = Column(String(15), nullable=False, default="upcoming", server_default="upcoming")
 
     created_at = Column(DateTime(timezone=True), default=datetime.now(timezone.utc))
     updated_at = Column(DateTime(timezone=True), default=datetime.now(timezone.utc), onupdate=datetime.now(timezone.utc))
 
     owner_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     owner = relationship("User", back_populates="rides") # Relationship: back reference to the user
-   
     ride_requests = relationship("RideRequest", back_populates="ride", cascade="all, delete-orphan")
 
 

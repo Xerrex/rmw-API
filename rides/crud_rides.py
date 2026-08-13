@@ -49,6 +49,7 @@ def create_ride(owner_id: int, rideData: RideCreateSchema, db:Session):
 
     new_ride = Ride()
     new_ride.vehicle_plate = rideData.vehicle_plate
+    new_ride.vehicle_model = rideData.vehicle_model
     new_ride.seats = rideData.seats
     new_ride.town_starting =  rideData.town_starting
     new_ride.town_ending = rideData.town_ending
@@ -73,11 +74,14 @@ def update_ride(ride: Ride, rideData:RideUpdateSchema, db:Session):
         Ride: A database object representing a ride.
     """
 
+    ride.vehicle_model = rideData.vehicle_model
     ride.seats = rideData.seats
     ride.town_starting = rideData.town_starting
     ride.town_ending = rideData.town_ending
     ride.depart_time = rideData.depart_time
     ride.end_time = rideData.end_time
+    if rideData.status is not None:
+        ride.status = rideData.status.value
 
     db.add(ride)
     db.commit()
