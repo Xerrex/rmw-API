@@ -5,6 +5,7 @@ from pydantic import BaseModel, ConfigDict
 
 class Ride_RequestCreateSchema(BaseModel):
     seats: int
+    pickup: str
     stop: str
     # status: str = "Pending"
     # ride_id: int
@@ -15,6 +16,7 @@ class Ride_RequestSchema(BaseModel):
     id: int
     uuid: str
     seats: int
+    pickup: str
     stop: str
     status: str
     created_at: datetime

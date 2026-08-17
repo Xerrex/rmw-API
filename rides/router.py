@@ -77,7 +77,7 @@ def update_ride_details(ride_uuid: str, rideData: RideUpdateSchema,
     return serialize_ride(updated_ride, current_user.id)
 
 
-@router.get("/{ride_uuid}/requests", response_model=List[Ride_RequestSchema])
+@router.get("/{ride_uuid}/requests")
 def get_ride_requests(ride_uuid: str, db:Session = Depends(get_db), current_user: UserSchema = Depends(get_current_user)):
     """Get requests on a ride.
 
@@ -98,7 +98,7 @@ def get_ride_requests(ride_uuid: str, db:Session = Depends(get_db), current_user
 
 
 
-@router.post("/{ride_uuid}/requests", response_model=Ride_RequestSchema)
+@router.post("/{ride_uuid}/requests")
 def make_ride_request(ride_uuid: str, rideRequestData:Ride_RequestCreateSchema, 
                        db:Session = Depends(get_db), current_user: UserSchema = Depends(get_current_user)):
     """Make a request to join a ride.

@@ -75,6 +75,7 @@ class RideRequest(Base):
     id = Column(Integer, primary_key=True)
     uuid = Column(String(36), unique=True, default=lambda: str(uuid.uuid4()))
     seats = Column(Integer, nullable=False, default=1)
+    pickup = Column(String(80), default='Ride Start', nullable=False)
     stop = Column(String(80), default='Ride Destination', nullable=False)
     status = Column(String(10), default='Pending', nullable=False) # Accepted/Rejected
 

@@ -67,6 +67,7 @@ def serialize_ride_request(ride_request: RideRequest) -> dict:
         # "id": ride_request.id,
         "uuid": ride_request.uuid,
         "seats": ride_request.seats,
+        "pickup": ride_request.pickup,
         "stop": ride_request.stop,
         "status": ride_request.status,
         "created_at": ride_request.created_at,

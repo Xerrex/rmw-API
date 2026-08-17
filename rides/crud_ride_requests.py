@@ -51,6 +51,7 @@ def create_ride_request(db: Session, ride_id: int, ride_requester_id: int,
 
     new_ride_request = RideRequest()
     new_ride_request.seats = rideRequestData.seats
+    new_ride_request.pickup = rideRequestData.pickup
     new_ride_request.stop = rideRequestData.stop
     new_ride_request.ride_id = ride_id
     new_ride_request.ride_requester_id = ride_requester_id
