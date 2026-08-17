@@ -99,7 +99,7 @@ def get_ride_requests(ride_uuid: str, db:Session = Depends(get_db), current_user
 
 
 @router.post("/{ride_uuid}/requests", response_model=Ride_RequestSchema)
-def make_ride_requests(ride_uuid: str, rideRequestData:Ride_RequestCreateSchema, 
+def make_ride_request(ride_uuid: str, rideRequestData:Ride_RequestCreateSchema, 
                        db:Session = Depends(get_db), current_user: UserSchema = Depends(get_current_user)):
     """Make a request to join a ride.
     """
