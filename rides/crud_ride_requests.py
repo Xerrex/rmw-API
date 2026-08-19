@@ -1,17 +1,20 @@
 from datetime import datetime
 from typing import Optional
+import json
 from sqlalchemy.orm import Session, joinedload, selectinload
 from sqlalchemy import or_
 from db.models import RideRequest, Ride
 from .schemas_rides_requests import Ride_RequestCreateSchema, Ride_RequestUpdateSchema
+from .audit import log_action, diff_fields
+from .helpers import PENDING_STATUS
 
 
 def get_all_user_requests(user_id: int, db: Session, skip: int=0, limit: int=5000,
                           search: Optional[str] = None,  min_seats: Optional[int] = None, date_from: Optional[datetime] = None, date_to: Optional[datetime] = None):
-    """get all user requests
+    """Get requests relevant to a user: requests they made, and requests made on rides they own.
 
     Args:
-        user_id (int): The id of the requester.
+        user_id (int): The id of the viewer.
         db (Session): Database session.
         skip (int, optional): The number of records to skip. Defaults to 0.
         limit (int, optional): The maximum number of records to retrieve. Defaults to 5000.
@@ -26,7 +29,10 @@ def get_all_user_requests(user_id: int, db: Session, skip: int=0, limit: int=500
     query = db.query(RideRequest).join(RideRequest.ride).options(
         selectinload(RideRequest.ride),
         joinedload(RideRequest.ride_requester),
-    ).filter(RideRequest.ride_requester_id == user_id)
+    ).filter(or_(
+        RideRequest.ride_requester_id == user_id,
+        Ride.owner_id == user_id,
+    ))
 
     if search:
         like = f"%{search}%"
@@ -101,47 +107,85 @@ def create_ride_request(db: Session, ride_id: int, ride_requester_id: int,
     new_ride_request.seats = rideRequestData.seats
     new_ride_request.pickup = rideRequestData.pickup
     new_ride_request.stop = rideRequestData.stop
+    new_ride_request.passenger_names = json.dumps(rideRequestData.passenger_names or [])
     new_ride_request.ride_id = ride_id
     new_ride_request.ride_requester_id = ride_requester_id
 
     db.add(new_ride_request)
     db.commit()
     db.refresh(new_ride_request)
+
+    log_action(db, entity_type="ride_request", entity_uuid=new_ride_request.uuid,
+               action="created", actor_id=ride_requester_id,
+               changes={"seats": {"from": None, "to": new_ride_request.seats},
+                        "pickup": {"from": None, "to": new_ride_request.pickup},
+                        "stop": {"from": None, "to": new_ride_request.stop}})
     return new_ride_request
 
 
-def update_ride_request(db: Session, ride_request: RideRequest, rideRequestData: Ride_RequestUpdateSchema):
-    """_Update ride request
+def update_ride_request(db: Session, ride_request: RideRequest, rideRequestData: Ride_RequestUpdateSchema,
+                         actor_id: Optional[int] = None):
+    """Update ride request
+
+    Updating the details of a request resets it to Pending, since the owner
+    needs to re-evaluate the new details.
 
     Args:
         db (Session): Database session.
         ride_request (RideRequest): A database object representing a ride-request.
         rideRequestData (Ride_RequestUpdateSchema): Data to update a ride request.
+        actor_id (int, optional): id of the user performing the update, for audit purposes.
     
     Returns:
         RideRequest: A database object representing a ride-request.
     """
-    
+    before = {
+        "seats": ride_request.seats,
+        "pickup": ride_request.pickup,
+        "stop": ride_request.stop,
+        "status": ride_request.status,
+    }
+
     ride_request.seats = rideRequestData.seats
+    ride_request.pickup = rideRequestData.pickup
     ride_request.stop = rideRequestData.stop
+    ride_request.passenger_names = json.dumps(rideRequestData.passenger_names or [])
+    ride_request.status = PENDING_STATUS
 
     db.add(ride_request)
     db.commit()
     db.refresh(ride_request)
+
+    after = {
+        "seats": ride_request.seats,
+        "pickup": ride_request.pickup,
+        "stop": ride_request.stop,
+        "status": ride_request.status,
+    }
+    log_action(db, entity_type="ride_request", entity_uuid=ride_request.uuid,
+               action="updated", actor_id=actor_id, changes=diff_fields(before, after))
     return ride_request
 
 
-def  update_request_status(db: Session, ride_request: RideRequest, rideRequestStatus: str):
+def  update_request_status(db: Session, ride_request: RideRequest, rideRequestStatus: str,
+                            actor_id: Optional[int] = None):
     """Update request status
 
     Args:
         db (Session): Database session.
         ride_request (RideRequest): A database object representing a ride-request.
-        rideRequestData (Ride_RequestUpdateStatusSchema): Data to update a ride request status.
+        rideRequestStatus (str): New status ("Accepted"/"Rejected").
+        actor_id (int, optional): id of the user performing the update, for audit purposes.
     """
+    before_status = ride_request.status
     ride_request.status = rideRequestStatus
     db.add(ride_request)
     db.commit()
     db.refresh(ride_request)
+
+    log_action(db, entity_type="ride_request", entity_uuid=ride_request.uuid,
+               action="status_changed", actor_id=actor_id,
+               changes={"status": {"from": before_status, "to": ride_request.status}})
     return ride_request
+
 

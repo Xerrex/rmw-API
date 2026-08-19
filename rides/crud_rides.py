@@ -4,6 +4,7 @@ from sqlalchemy import or_
 from sqlalchemy.orm import Session, joinedload, selectinload
 from db.models import Ride
 from .schemas_rides import RideCreateSchema, RideUpdateSchema
+from .audit import log_action, diff_fields
 
 
 def get_rides(db: Session, skip: int = 0, limit: int = 5000, search: Optional[str] = None,
@@ -93,6 +94,8 @@ def create_ride(owner_id: int, rideData: RideCreateSchema, db:Session):
     db.add(new_ride)
     db.commit()
     db.refresh(new_ride)
+
+    log_action(db, entity_type="ride", entity_uuid=new_ride.uuid, action="created", actor_id=owner_id)
     return new_ride
 
 
@@ -107,6 +110,16 @@ def update_ride(ride: Ride, rideData:RideUpdateSchema, db:Session):
         Ride: A database object representing a ride.
     """
 
+    before = {
+        "vehicle_model": ride.vehicle_model,
+        "seats": ride.seats,
+        "town_starting": ride.town_starting,
+        "town_ending": ride.town_ending,
+        "depart_time": ride.depart_time,
+        "end_time": ride.end_time,
+        "status": ride.status,
+    }
+
     ride.vehicle_model = rideData.vehicle_model
     ride.seats = rideData.seats
     ride.town_starting = rideData.town_starting
@@ -119,5 +132,17 @@ def update_ride(ride: Ride, rideData:RideUpdateSchema, db:Session):
     db.add(ride)
     db.commit()
     db.refresh(ride)
+
+    after = {
+        "vehicle_model": ride.vehicle_model,
+        "seats": ride.seats,
+        "town_starting": ride.town_starting,
+        "town_ending": ride.town_ending,
+        "depart_time": ride.depart_time,
+        "end_time": ride.end_time,
+        "status": ride.status,
+    }
+    log_action(db, entity_type="ride", entity_uuid=ride.uuid, action="updated",
+               actor_id=ride.owner_id, changes=diff_fields(before, after))
     return ride
    

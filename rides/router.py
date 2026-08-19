@@ -15,7 +15,9 @@ from .schemas_rides import RidesSchema, RideCreateSchema, RideSchema, \
     RideUpdateSchema
 from .schemas_rides_requests import Ride_RequestSchema, Ride_RequestCreateSchema, \
     Ride_RequestUpdateSchema
-from .helpers import serialize_ride, serialize_ride_request
+from .schemas_audit import AuditLogSchema
+from .helpers import serialize_ride, serialize_ride_request, serialize_audit_log, can_edit_ride_request
+from db.models import AuditLog
 
 
 router = APIRouter()
@@ -57,7 +59,7 @@ def get_all_ride_requests( page: int = Query(1, ge=1), limit: int = Query(10, ge
                                                search=search, min_seats=min_seats, date_from=date_from,
                                                date_to=date_to)
     return {
-        "r_requests": [serialize_ride_request(request) for request in r_requests],
+        "r_requests": [serialize_ride_request(request, current_user.id) for request in r_requests],
         "total": total,
         "page": page,
         "limit": limit,
@@ -114,7 +116,7 @@ def get_ride_requests(ride_uuid: str, db:Session = Depends(get_db), current_user
     else:
         ride_requests = [req for req in ride.ride_requests if req.ride_requester_id == current_user.id]
 
-    return [serialize_ride_request(req) for req in ride_requests]
+    return [serialize_ride_request(req, current_user.id) for req in ride_requests]
 
 
 
@@ -139,7 +141,7 @@ def make_ride_request(ride_uuid: str, rideRequestData:Ride_RequestCreateSchema,
     ride_request = create_ride_request(db=db, ride_id=ride.id, ride_requester_id=current_user.id, 
                                        rideRequestData=rideRequestData)
     
-    return serialize_ride_request(ride_request)
+    return serialize_ride_request(ride_request, current_user.id)
     
     
 
@@ -165,7 +167,7 @@ def get_ride_request(ride_uuid: str, request_uuid: str, db:Session = Depends(get
         detail = f"You are not authorized to view ride request: '{request_uuid}'"
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=detail)
 
-    return serialize_ride_request(ride_request)
+    return serialize_ride_request(ride_request, current_user.id)
 
 
 @router.put("/{ride_uuid}/requests/{request_uuid}", response_model=Ride_RequestSchema)
@@ -190,12 +192,15 @@ def update_ride_request_details(ride_uuid: str, request_uuid: str, rideRequestDa
     if ride_request.ride_requester_id != current_user.id:
         detail = f"You are not authorized to update ride request.: '{request_uuid}'"
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=detail)
-    
-    # TODO: Prevent Details update if ride request has been Accepted.
+
+    if not can_edit_ride_request(ride_request):
+        detail = ("This request can no longer be edited. It may already be accepted, or the ride "
+                  "is less than 6 hours away or no longer upcoming.")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=detail)
 
     updated_ride_request = update_ride_request(db=db, ride_request=ride_request, 
-                                                    rideRequestData=rideRequestData)
-    return serialize_ride_request(updated_ride_request)
+                                                    rideRequestData=rideRequestData, actor_id=current_user.id)
+    return serialize_ride_request(updated_ride_request, current_user.id)
     
 
 
@@ -232,6 +237,53 @@ def update_ride_request_status(ride_uuid: str, request_uuid: str, rideRequestSta
 
 
     updated_ride_request = update_request_status(db=db, ride_request=ride_request, 
-                                                rideRequestStatus=rideRequestStatus)
+                                                rideRequestStatus=rideRequestStatus, actor_id=current_user.id)
     
-    return serialize_ride_request(updated_ride_request)
+    return serialize_ride_request(updated_ride_request, current_user.id)
+
+
+@router.get("/{ride_uuid}/audit-logs", response_model=List[AuditLogSchema])
+def get_ride_audit_logs(ride_uuid: str, db:Session = Depends(get_db),
+                        current_user: UserSchema = Depends(get_current_user)):
+    """Get the audit trail for a ride and all requests made on it (owner only).
+    """
+    ride = get_ride_by_uuid(ride_uuid, db=db)
+
+    if not ride:
+        detail = f"Ride with uuid: '{ride_uuid}' does not exists."
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=detail)
+
+    if ride.owner_id != current_user.id:
+        detail = f"You are not authorized to view audit logs for ride: '{ride_uuid}'"
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=detail)
+
+    entity_uuids = [ride.uuid] + [req.uuid for req in ride.ride_requests]
+    logs = db.query(AuditLog).filter(AuditLog.entity_uuid.in_(entity_uuids)) \
+        .order_by(AuditLog.created_at.desc()).all()
+
+    return [serialize_audit_log(log) for log in logs]
+
+
+@router.get("/{ride_uuid}/requests/{request_uuid}/audit-logs", response_model=List[AuditLogSchema])
+def get_ride_request_audit_logs(ride_uuid: str, request_uuid: str, db:Session = Depends(get_db),
+                                current_user: UserSchema = Depends(get_current_user)):
+    """Get the audit trail for a single ride request (owner or requester).
+    """
+    ride = get_ride_by_uuid(ride_uuid, db=db)
+    if not ride:
+        detail = f"Ride with uuid: '{ride_uuid}' does not exists."
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=detail)
+
+    ride_request = get_ride_request_by_uuid(db=db, ride_request_uuid=request_uuid)
+    if not ride_request:
+        detail = f"Ride request with uuid: '{request_uuid}' does not exists."
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=detail)
+
+    if current_user.id not in (ride.owner_id, ride_request.ride_requester_id):
+        detail = f"You are not authorized to view audit logs for ride request: '{request_uuid}'"
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=detail)
+
+    logs = db.query(AuditLog).filter(AuditLog.entity_uuid == ride_request.uuid) \
+        .order_by(AuditLog.created_at.desc()).all()
+
+    return [serialize_audit_log(log) for log in logs]

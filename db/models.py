@@ -78,6 +78,8 @@ class RideRequest(Base):
     pickup = Column(String(80), default='Ride Start', nullable=False)
     stop = Column(String(80), default='Ride Destination', nullable=False)
     status = Column(String(10), default='Pending', nullable=False) # Accepted/Rejected
+    # JSON-encoded list of names occupying the extra seats (seats - 1), owner-only visibility
+    passenger_names = Column(String, nullable=True)
 
     created_at = Column(DateTime(timezone=True), default=datetime.now(timezone.utc))
     updated_at = Column(DateTime(timezone=True), default=datetime.now(timezone.utc), onupdate=datetime.now(timezone.utc))
@@ -87,4 +89,22 @@ class RideRequest(Base):
 
     ride_requester_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     ride_requester = relationship("User", back_populates="ride_requests") # Relationship: back reference to the user
+
+
+class AuditLog(Base):
+    """Audit trail of changes made to rides and ride requests.
+    """
+
+    __tablename__ = "audit_logs"
+
+    id = Column(Integer, primary_key=True)
+    entity_type = Column(String(20), nullable=False)  # "ride" | "ride_request"
+    entity_uuid = Column(String(36), nullable=False, index=True)
+    action = Column(String(40), nullable=False)  # e.g. "created", "updated", "status_changed"
+    changes = Column(String, nullable=True)  # JSON-encoded {field: {"from": x, "to": y}}
+    actor_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+
+    created_at = Column(DateTime(timezone=True), default=datetime.now(timezone.utc))
+
+    actor = relationship("User")
 

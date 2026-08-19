@@ -3,12 +3,17 @@
 Keeps seat availability, ownership, and request-visibility rules in one place
 so both the rides list and ride-detail endpoints stay consistent.
 """
+import json
+from datetime import datetime, timezone, timedelta
 from typing import Optional
-from db.models import Ride, RideRequest
+from db.models import Ride, RideRequest, AuditLog
 
 ACCEPTED_STATUS = "Accepted"
 PENDING_STATUS = "Pending"
 REJECTED_STATUS = "Rejected"
+
+# Requests can no longer be edited once the ride is within this window of departing
+EDIT_CUTOFF = timedelta(hours=6)
 
 
 def get_accepted_seats(ride: Ride) -> int:
@@ -32,6 +37,24 @@ def user_has_requested(ride: Ride, user_id: int) -> bool:
         req.ride_requester_id == user_id and req.status != REJECTED_STATUS
         for req in ride.ride_requests
     )
+
+
+def can_edit_ride_request(ride_request: RideRequest) -> bool:
+    """Whether a ride request's details (seats/pickup/stop) can still be changed.
+
+    Allowed only while the request is not yet accepted and the ride is still
+    upcoming and more than EDIT_CUTOFF away from departing.
+    """
+    ride = ride_request.ride
+    if ride_request.status == ACCEPTED_STATUS:
+        return False
+    if not ride or ride.status != "upcoming":
+        return False
+
+    depart_time = ride.depart_time
+    if depart_time.tzinfo is None:
+        depart_time = depart_time.replace(tzinfo=timezone.utc)
+    return depart_time - datetime.now(timezone.utc) >= EDIT_CUTOFF
 
 
 def serialize_ride(ride: Ride, current_user_id: int) -> dict:
@@ -60,12 +83,25 @@ def serialize_ride(ride: Ride, current_user_id: int) -> dict:
     }
 
 
-def serialize_ride_request(ride_request: RideRequest) -> dict:
-    """Combine ORM ride-request fields with the requester's display name."""
+def serialize_ride_request(ride_request: RideRequest, current_user_id: Optional[int] = None) -> dict:
+    """Combine ORM ride-request fields with the requester's display name.
+
+    When current_user_id is supplied, also annotate viewer-specific context:
+    whether the viewer owns the ride ("owner") or made the request
+    ("requester"), whether they can still edit the request, and the
+    passenger names (owner-only).
+    """
     requester = ride_request.ride_requester
     ride = ride_request.ride
+    is_owner = bool(ride and current_user_id is not None and ride.owner_id == current_user_id)
+    viewer_role = None
+    if current_user_id is not None:
+        viewer_role = "owner" if is_owner else "requester"
+
+    passenger_names = json.loads(ride_request.passenger_names) if ride_request.passenger_names else []
+
     return {
-        # "id": ride_request.id,
+        "id": ride_request.id,
         "uuid": ride_request.uuid,
         "seats": ride_request.seats,
         "pickup": ride_request.pickup,
@@ -83,7 +119,25 @@ def serialize_ride_request(ride_request: RideRequest) -> dict:
             "end_time": ride.end_time,
             "status": ride.status,
         } if ride else None,
-        # "ride_id": ride_request.ride_id,
-        # "ride_requester_id": ride_request.ride_requester_id,
+        "ride_id": ride_request.ride_id,
+        "ride_requester_id": ride_request.ride_requester_id,
         "requester_name": f"{requester.first_name} {requester.last_name}" if requester else None,
+        "viewer_role": viewer_role,
+        "can_edit": (not is_owner) and can_edit_ride_request(ride_request),
+        "passenger_names": passenger_names if is_owner else None,
     }
+
+
+def serialize_audit_log(entry: AuditLog) -> dict:
+    """Combine ORM audit log fields with the actor's display name."""
+    actor = entry.actor
+    return {
+        "id": entry.id,
+        "entity_type": entry.entity_type,
+        "entity_uuid": entry.entity_uuid,
+        "action": entry.action,
+        "changes": json.loads(entry.changes) if entry.changes else None,
+        "actor_name": f"{actor.first_name} {actor.last_name}" if actor else None,
+        "created_at": entry.created_at,
+    }
+
