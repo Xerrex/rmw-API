@@ -8,7 +8,8 @@ from db.db_deps import get_db
 from .crud_rides import get_rides, create_ride, get_ride_by_uuid, \
     update_ride
 from .crud_ride_requests import get_requests_on_ride, create_ride_request, \
-                get_ride_request_by_uuid, update_ride_request, update_request_status
+                get_ride_request_by_uuid, update_ride_request, update_request_status, \
+                get_all_user_requests
 
 from .schemas_rides import RidesSchema, RideCreateSchema, RideSchema, \
     RideUpdateSchema
@@ -34,7 +35,6 @@ def get_all_rides(db: Session = Depends(get_db), current_user: UserSchema = Depe
     return {"rides": serialized_rides, "total": total, "page": page, "limit": limit}
 
 
-
 @router.post("/", response_model=RideSchema)
 def create_new_ride(rideData: RideCreateSchema, db:Session = Depends(get_db), 
                         current_user: UserSchema = Depends(get_current_user)):
@@ -42,6 +42,26 @@ def create_new_ride(rideData: RideCreateSchema, db:Session = Depends(get_db),
     """
     ride = create_ride(owner_id=current_user.id, rideData=rideData, db=db)
     return serialize_ride(ride, current_user.id)
+
+
+
+@router.get("/requests")
+def get_all_ride_requests( page: int = Query(1, ge=1), limit: int = Query(10, ge=1, le=100),
+                          search: Optional[str] = None, min_seats: Optional[int] = Query(None, ge=1),
+                          date_from: Optional[datetime] = None, date_to: Optional[datetime] = None,
+                          db:Session = Depends(get_db), current_user: UserSchema = Depends(get_current_user)):
+    """Get requests a user has made
+    """
+    skip = (page - 1) * limit
+    r_requests, total =  get_all_user_requests(current_user.id, db=db, skip=skip, limit=limit,
+                                               search=search, min_seats=min_seats, date_from=date_from,
+                                               date_to=date_to)
+    return {
+        "r_requests": [serialize_ride_request(request) for request in r_requests],
+        "total": total,
+        "page": page,
+        "limit": limit,
+    }
 
 
 @router.get("/{ride_uuid}", response_model=RideSchema)
@@ -95,6 +115,8 @@ def get_ride_requests(ride_uuid: str, db:Session = Depends(get_db), current_user
         ride_requests = [req for req in ride.ride_requests if req.ride_requester_id == current_user.id]
 
     return [serialize_ride_request(req) for req in ride_requests]
+
+
 
 
 

@@ -63,6 +63,7 @@ def serialize_ride(ride: Ride, current_user_id: int) -> dict:
 def serialize_ride_request(ride_request: RideRequest) -> dict:
     """Combine ORM ride-request fields with the requester's display name."""
     requester = ride_request.ride_requester
+    ride = ride_request.ride
     return {
         # "id": ride_request.id,
         "uuid": ride_request.uuid,
@@ -72,6 +73,16 @@ def serialize_ride_request(ride_request: RideRequest) -> dict:
         "status": ride_request.status,
         "created_at": ride_request.created_at,
         "updated_at": ride_request.updated_at,
+        "ride": {
+            "uuid": ride.uuid,
+            "vehicle_plate": ride.vehicle_plate,
+            "vehicle_model": ride.vehicle_model,
+            "town_starting": ride.town_starting,
+            "town_ending": ride.town_ending,
+            "depart_time": ride.depart_time,
+            "end_time": ride.end_time,
+            "status": ride.status,
+        } if ride else None,
         # "ride_id": ride_request.ride_id,
         # "ride_requester_id": ride_request.ride_requester_id,
         "requester_name": f"{requester.first_name} {requester.last_name}" if requester else None,
