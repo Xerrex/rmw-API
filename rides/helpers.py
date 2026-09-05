@@ -89,7 +89,8 @@ def serialize_ride_request(ride_request: RideRequest, current_user_id: Optional[
     When current_user_id is supplied, also annotate viewer-specific context:
     whether the viewer owns the ride ("owner") or made the request
     ("requester"), whether they can still edit the request, and the
-    passenger names (owner-only).
+    passenger names (visible to the requester always, and to the owner only
+    once the request has been accepted).
     """
     requester = ride_request.ride_requester
     ride = ride_request.ride
@@ -124,7 +125,7 @@ def serialize_ride_request(ride_request: RideRequest, current_user_id: Optional[
         "requester_name": f"{requester.first_name} {requester.last_name}" if requester else None,
         "viewer_role": viewer_role,
         "can_edit": (not is_owner) and can_edit_ride_request(ride_request),
-        "passenger_names": passenger_names if is_owner else None,
+        "passenger_names": passenger_names if (not is_owner or ride_request.status == ACCEPTED_STATUS) else None,
     }
 
 
