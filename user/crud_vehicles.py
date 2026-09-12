@@ -34,8 +34,8 @@ def delete_user_vehicle(db: Session, user_id: int, vehicle_id: int) -> None:
     if vehicle.owner_id != user_id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You are not authorized to delete this vehicle")
 
-    # Requirement 5: Deleting a vehicle should be possible if there is no ride created using the vehicle details, otherwise it should not be possible.
-    ride_count = db.query(Ride).filter(Ride.vehicle_id == vehicle.id).count()
+    # Deleting a vehicle should be possible if there is no ride created using the vehicle details, otherwise it should not be possible.
+    ride_count = db.query(Ride).filter(Ride.vehicle_uuid == vehicle.uuid).count()
     if ride_count > 0:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

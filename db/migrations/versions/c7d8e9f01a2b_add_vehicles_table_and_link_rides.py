@@ -21,21 +21,28 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    # 1. Create vehicles table
-    op.create_table(
-        'vehicles',
-        sa.Column('id', sa.Integer(), primary_key=True),
-        sa.Column('uuid', sa.String(length=36), nullable=False, unique=True),
-        sa.Column('vehicle_plate', sa.String(length=20), nullable=False),
-        sa.Column('vehicle_model', sa.String(length=80), nullable=False),
-        sa.Column('seats', sa.Integer(), nullable=False, server_default='4'),
-        sa.Column('owner_id', sa.Integer(), sa.ForeignKey('users.id', ondelete='CASCADE'), nullable=False),
-        sa.Column('created_at', sa.DateTime(timezone=True), nullable=True),
-        sa.Column('updated_at', sa.DateTime(timezone=True), nullable=True),
-    )
+    connection = op.get_bind()
+    inspector = sa.inspect(connection)
 
-    # 2. Add vehicle_id column to rides table
-    op.add_column('rides', sa.Column('vehicle_id', sa.Integer(), sa.ForeignKey('vehicles.id', ondelete='RESTRICT'), nullable=True))
+    # 1. Create vehicles table if not exists
+    if 'vehicles' not in inspector.get_table_names():
+        op.create_table(
+            'vehicles',
+            sa.Column('id', sa.Integer(), primary_key=True),
+            sa.Column('uuid', sa.String(length=36), nullable=False, unique=True),
+            sa.Column('vehicle_plate', sa.String(length=20), nullable=False),
+            sa.Column('vehicle_model', sa.String(length=80), nullable=False),
+            sa.Column('seats', sa.Integer(), nullable=False, server_default='4'),
+            sa.Column('owner_id', sa.Integer(), sa.ForeignKey('users.id', ondelete='CASCADE'), nullable=False),
+            sa.Column('created_at', sa.DateTime(timezone=True), nullable=True),
+            sa.Column('updated_at', sa.DateTime(timezone=True), nullable=True),
+        )
+
+    # 2. Add vehicle_id column to rides table if not exists
+    columns = [col['name'] for col in inspector.get_columns('rides')]
+    if 'vehicle_id' not in columns:
+        with op.batch_alter_table('rides') as batch_op:
+            batch_op.add_column(sa.Column('vehicle_id', sa.Integer(), sa.ForeignKey('vehicles.id', ondelete='RESTRICT', name='fk_rides_vehicle_id'), nullable=True))
 
     # 3. Data migration: Migrate existing rides vehicle details to vehicles table & update rides.vehicle_id
     connection = op.get_bind()

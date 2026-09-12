@@ -25,13 +25,17 @@ def get_rides(db: Session, skip: int = 0, limit: int = 5000, search: Optional[st
     Returns:
         tuple[List[Ride], int]: A list of matching ride objects and the total match count.
     """
-    query = db.query(Ride).options(selectinload(Ride.ride_requests), joinedload(Ride.owner))
+    query = db.query(Ride).options(
+        selectinload(Ride.ride_requests),
+        joinedload(Ride.owner),
+        joinedload(Ride.vehicle),
+    )
 
     if search:
         like = f"%{search}%"
-        query = query.filter(or_(
-            Ride.vehicle_plate.ilike(like),
-            Ride.vehicle_model.ilike(like),
+        query = query.outerjoin(Ride.vehicle).filter(or_(
+            Vehicle.vehicle_plate.ilike(like),
+            Vehicle.vehicle_model.ilike(like),
             Ride.town_starting.ilike(like),
             Ride.town_ending.ilike(like),
         ))
@@ -62,7 +66,9 @@ def get_ride_by_uuid(uuid: str, db:Session):
         Ride: A database object representing a ride.
     """
     ride = db.query(Ride).options(
-        selectinload(Ride.ride_requests), joinedload(Ride.owner)
+        selectinload(Ride.ride_requests),
+        joinedload(Ride.owner),
+        joinedload(Ride.vehicle),
     ).filter(Ride.uuid == uuid).first()
     return ride
 
@@ -81,19 +87,14 @@ def create_ride(owner_id: int, rideData: RideCreateSchema, db:Session):
         Ride: A database object representing a ride.
     """
     vehicle = None
-    if rideData.vehicle_id:
-        vehicle = db.query(Vehicle).filter(Vehicle.id == rideData.vehicle_id, Vehicle.owner_id == owner_id).first()
+    if rideData.vehicle_uuid:
+        vehicle = db.query(Vehicle).filter(Vehicle.uuid == rideData.vehicle_uuid, Vehicle.owner_id == owner_id).first()
         if not vehicle:
             raise HTTPException(status_code=400, detail="Vehicle not found or does not belong to user")
 
     new_ride = Ride()
     if vehicle:
-        new_ride.vehicle_id = vehicle.id
-        new_ride.vehicle_plate = vehicle.vehicle_plate
-        new_ride.vehicle_model = vehicle.vehicle_model
-    else:
-        new_ride.vehicle_plate = rideData.vehicle_plate or "N/A"
-        new_ride.vehicle_model = rideData.vehicle_model or "N/A"
+        new_ride.vehicle_uuid = vehicle.uuid
 
     new_ride.seats = rideData.seats
     new_ride.town_starting =  rideData.town_starting
@@ -122,7 +123,6 @@ def update_ride(ride: Ride, rideData:RideUpdateSchema, db:Session):
     """
 
     before = {
-        "vehicle_model": ride.vehicle_model,
         "seats": ride.seats,
         "town_starting": ride.town_starting,
         "town_ending": ride.town_ending,
@@ -131,7 +131,6 @@ def update_ride(ride: Ride, rideData:RideUpdateSchema, db:Session):
         "status": ride.status,
     }
 
-    ride.vehicle_model = rideData.vehicle_model
     ride.seats = rideData.seats
     ride.town_starting = rideData.town_starting
     ride.town_ending = rideData.town_ending
@@ -145,7 +144,6 @@ def update_ride(ride: Ride, rideData:RideUpdateSchema, db:Session):
     db.refresh(ride)
 
     after = {
-        "vehicle_model": ride.vehicle_model,
         "seats": ride.seats,
         "town_starting": ride.town_starting,
         "town_ending": ride.town_ending,

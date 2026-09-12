@@ -3,7 +3,7 @@ from typing import Optional
 import json
 from sqlalchemy.orm import Session, joinedload, selectinload
 from sqlalchemy import or_
-from db.models import RideRequest, Ride
+from db.models import RideRequest, Ride, Vehicle
 from .schemas_rides_requests import Ride_RequestCreateSchema, Ride_RequestUpdateSchema
 from .audit import log_action, diff_fields
 from .helpers import PENDING_STATUS
@@ -27,7 +27,7 @@ def get_all_user_requests(user_id: int, db: Session, skip: int=0, limit: int=500
         List[RideRequest]: A list of all ride requests objects in the database.
     """
     query = db.query(RideRequest).join(RideRequest.ride).options(
-        selectinload(RideRequest.ride),
+        selectinload(RideRequest.ride).joinedload(Ride.vehicle),
         joinedload(RideRequest.ride_requester),
     ).filter(or_(
         RideRequest.ride_requester_id == user_id,
@@ -36,12 +36,12 @@ def get_all_user_requests(user_id: int, db: Session, skip: int=0, limit: int=500
 
     if search:
         like = f"%{search}%"
-        query = query.filter(or_(
-                Ride.vehicle_plate.ilike(like),
-                Ride.vehicle_model.ilike(like),
-                Ride.town_starting.ilike(like),
-                Ride.town_ending.ilike(like),
-            ))
+        query = query.outerjoin(Vehicle, Ride.vehicle_uuid == Vehicle.uuid).filter(or_(
+            Vehicle.vehicle_plate.ilike(like),
+            Vehicle.vehicle_model.ilike(like),
+            Ride.town_starting.ilike(like),
+            Ride.town_ending.ilike(like),
+        ))
 
     if min_seats is not None:
         query = query.filter(RideRequest.seats >= min_seats)

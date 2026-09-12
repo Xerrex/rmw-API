@@ -71,8 +71,6 @@ class Ride(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     uuid: Mapped[str] = mapped_column(String(36), unique=True, default=lambda: str(uuid.uuid4()))
-    vehicle_plate: Mapped[str] = mapped_column(String(20), nullable=False)
-    vehicle_model: Mapped[str] = mapped_column(String(80), nullable=False, server_default="")
     seats: Mapped[int] = mapped_column(Integer, nullable=False)
     town_starting: Mapped[str] = mapped_column(String(80), nullable=False)
     town_ending: Mapped[str] = mapped_column(String(80), nullable=False)
@@ -83,7 +81,7 @@ class Ride(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.now(timezone.utc))
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.now(timezone.utc), onupdate=datetime.now(timezone.utc))
 
-    vehicle_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("vehicles.id", ondelete="RESTRICT"), nullable=True)
+    vehicle_uuid: Mapped[Optional[str]] = mapped_column(String(36), ForeignKey("vehicles.uuid", ondelete="RESTRICT"), nullable=True)
     vehicle: Mapped[Optional["Vehicle"]] = relationship("Vehicle", back_populates="rides")
 
     owner_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)

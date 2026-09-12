@@ -29,6 +29,8 @@ class RideRequestDashboardSchema(BaseModel):
     dropOff: str
     route: str
     status: str
+    viewerRole: Optional[str] = None
+    type: Optional[str] = None
 
 
 class ActivityItemSchema(BaseModel):

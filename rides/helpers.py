@@ -63,13 +63,13 @@ def serialize_ride(ride: Ride, current_user_id: int) -> dict:
     owner = ride.owner
     vehicle = ride.vehicle
 
-    vehicle_plate = vehicle.vehicle_plate if vehicle else ride.vehicle_plate
-    vehicle_model = vehicle.vehicle_model if vehicle else ride.vehicle_model
+    vehicle_plate = vehicle.vehicle_plate if vehicle else "N/A"
+    vehicle_model = vehicle.vehicle_model if vehicle else "N/A"
 
     return {
         "id": ride.id,
         "uuid": ride.uuid,
-        "vehicle_id": ride.vehicle_id,
+        "vehicle_uuid": ride.vehicle_uuid,
         "vehicle_plate": vehicle_plate,
         "vehicle_model": vehicle_model,
         "seats": ride.seats,
@@ -106,6 +106,10 @@ def serialize_ride_request(ride_request: RideRequest, current_user_id: Optional[
 
     passenger_names = json.loads(ride_request.passenger_names) if ride_request.passenger_names else []
 
+    ride_vehicle = ride.vehicle if ride else None
+    vehicle_plate = ride_vehicle.vehicle_plate if ride_vehicle else "N/A"
+    vehicle_model = ride_vehicle.vehicle_model if ride_vehicle else "N/A"
+
     return {
         "id": ride_request.id,
         "uuid": ride_request.uuid,
@@ -117,8 +121,9 @@ def serialize_ride_request(ride_request: RideRequest, current_user_id: Optional[
         "updated_at": ride_request.updated_at,
         "ride": {
             "uuid": ride.uuid,
-            "vehicle_plate": ride.vehicle_plate,
-            "vehicle_model": ride.vehicle_model,
+            "vehicle_uuid": ride.vehicle_uuid,
+            "vehicle_plate": vehicle_plate,
+            "vehicle_model": vehicle_model,
             "town_starting": ride.town_starting,
             "town_ending": ride.town_ending,
             "depart_time": ride.depart_time,

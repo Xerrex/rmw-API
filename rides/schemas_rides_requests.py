@@ -24,8 +24,9 @@ class Ride_RequestCreateSchema(BaseModel):
 
 class RideSummarySchema(BaseModel):
     uuid: str
-    vehicle_plate: str
-    vehicle_model: str
+    vehicle_uuid: Optional[str] = None
+    vehicle_plate: Optional[str] = None
+    vehicle_model: Optional[str] = None
     town_starting: str
     town_ending: str
     depart_time: datetime

@@ -14,9 +14,9 @@ class RideStatus(str, Enum):
 class RideSchema(BaseModel):
     id: int
     uuid: str
-    vehicle_id: Optional[int] = None
-    vehicle_plate: str
-    vehicle_model: str
+    vehicle_uuid: Optional[str] = None
+    vehicle_plate: Optional[str] = None
+    vehicle_model: Optional[str] = None
     seats: int
     town_starting: str
     town_ending: str
@@ -41,6 +41,7 @@ class RideSchema(BaseModel):
             "example": {
                 "id": 0,
                 "uuid": "string",
+                "vehicle_uuid": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
                 "vehicle_plate": "KXX 123X",
                 "vehicle_model": "Nissan Note",
                 "seats": 4,
@@ -100,9 +101,7 @@ class RideDetailsSchema(BaseModel):
 
 
 class RideCreateSchema(RideDetailsSchema):
-    vehicle_id: Optional[int] = None
-    vehicle_plate: Optional[str] = None
-    vehicle_model: Optional[str] = None
+    vehicle_uuid: Optional[str] = None
     seats: int
     town_starting: str
     town_ending: str
@@ -111,8 +110,7 @@ class RideCreateSchema(RideDetailsSchema):
     model_config = ConfigDict(
         json_schema_extra={
             "example": {
-                "vehicle_plate": "KXX 123X",
-                "vehicle_model": "Nissan Note",
+                "vehicle_uuid": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
                 "seats": 4,
                 "town_starting": "Nairobi",
                 "town_ending": "Mombasa",
@@ -127,7 +125,6 @@ class RideCreateSchema(RideDetailsSchema):
 
 
 class RideUpdateSchema(RideDetailsSchema):
-    vehicle_model: str
     seats: int
     town_starting: str
     town_ending: str
@@ -141,7 +138,6 @@ class RideUpdateSchema(RideDetailsSchema):
                 "depart_time": "01-12-2024 08:00",
                 "end_time": "01-12-2024 12:00",
                 "seats": 4,
-                "vehicle_model": "Nissan Note",
                 "status": "upcoming",
             }
         },

@@ -106,13 +106,13 @@ def get_dashboard_metrics(db: Session, user_id: int) -> List[dict]:
 
 
 def get_upcoming_rides(db: Session, user_id: int, limit: int = 5) -> List[dict]:
-    owned_rides = db.query(Ride).filter(
+    owned_rides = db.query(Ride).options(joinedload(Ride.vehicle)).filter(
         Ride.owner_id == user_id,
         Ride.status == "upcoming"
     ).all()
 
     joined_requests = db.query(RideRequest).options(
-        joinedload(RideRequest.ride)
+        joinedload(RideRequest.ride).joinedload(Ride.vehicle)
     ).filter(
         RideRequest.ride_requester_id == user_id,
         RideRequest.status == ACCEPTED_STATUS
@@ -127,9 +127,10 @@ def get_upcoming_rides(db: Session, user_id: int, limit: int = 5) -> List[dict]:
     for ride in sorted_rides:
         depart = ride.depart_time
         end = ride.end_time
-        vehicle_str = f"{ride.vehicle_plate}"
-        if ride.vehicle_model:
-            vehicle_str += f" ({ride.vehicle_model})"
+        vehicle = ride.vehicle
+        vehicle_str = vehicle.vehicle_plate if vehicle else "N/A"
+        if vehicle and vehicle.vehicle_model:
+            vehicle_str += f" ({vehicle.vehicle_model})"
 
         results.append({
             "id": ride.uuid,
@@ -161,6 +162,9 @@ def get_dashboard_ride_requests(db: Session, user_id: int, limit: int = 5) -> Li
         ride = req.ride
         route_str = f"{ride.town_starting} -> {ride.town_ending}" if ride else ""
         mapped_status = status_map.get(req.status, req.status.lower())
+        is_owner = bool(ride and ride.owner_id == user_id)
+        viewer_role = "owner" if is_owner else "requester"
+        req_type = "incoming" if is_owner else "outgoing"
 
         results.append({
             "id": req.uuid,
@@ -170,6 +174,8 @@ def get_dashboard_ride_requests(db: Session, user_id: int, limit: int = 5) -> Li
             "dropOff": req.stop,
             "route": route_str,
             "status": mapped_status,
+            "viewerRole": viewer_role,
+            "type": req_type,
         })
     return results
 
