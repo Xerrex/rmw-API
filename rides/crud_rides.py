@@ -1,8 +1,9 @@
 from datetime import datetime
 from typing import Optional
+from fastapi import HTTPException
 from sqlalchemy import or_
 from sqlalchemy.orm import Session, joinedload, selectinload
-from db.models import Ride
+from db.models import Ride, Vehicle
 from .schemas_rides import RideCreateSchema, RideUpdateSchema
 from .audit import log_action, diff_fields
 
@@ -79,10 +80,21 @@ def create_ride(owner_id: int, rideData: RideCreateSchema, db:Session):
     Returns:
         Ride: A database object representing a ride.
     """
+    vehicle = None
+    if rideData.vehicle_id:
+        vehicle = db.query(Vehicle).filter(Vehicle.id == rideData.vehicle_id, Vehicle.owner_id == owner_id).first()
+        if not vehicle:
+            raise HTTPException(status_code=400, detail="Vehicle not found or does not belong to user")
 
     new_ride = Ride()
-    new_ride.vehicle_plate = rideData.vehicle_plate
-    new_ride.vehicle_model = rideData.vehicle_model
+    if vehicle:
+        new_ride.vehicle_id = vehicle.id
+        new_ride.vehicle_plate = vehicle.vehicle_plate
+        new_ride.vehicle_model = vehicle.vehicle_model
+    else:
+        new_ride.vehicle_plate = rideData.vehicle_plate or "N/A"
+        new_ride.vehicle_model = rideData.vehicle_model or "N/A"
+
     new_ride.seats = rideData.seats
     new_ride.town_starting =  rideData.town_starting
     new_ride.town_ending = rideData.town_ending

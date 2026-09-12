@@ -61,12 +61,17 @@ def serialize_ride(ride: Ride, current_user_id: int) -> dict:
     """Combine ORM ride fields with viewer-specific context for API responses."""
     is_owner = ride.owner_id == current_user_id
     owner = ride.owner
+    vehicle = ride.vehicle
+
+    vehicle_plate = vehicle.vehicle_plate if vehicle else ride.vehicle_plate
+    vehicle_model = vehicle.vehicle_model if vehicle else ride.vehicle_model
 
     return {
         "id": ride.id,
         "uuid": ride.uuid,
-        "vehicle_plate": ride.vehicle_plate,
-        "vehicle_model": ride.vehicle_model,
+        "vehicle_id": ride.vehicle_id,
+        "vehicle_plate": vehicle_plate,
+        "vehicle_model": vehicle_model,
         "seats": ride.seats,
         "town_starting": ride.town_starting,
         "town_ending": ride.town_ending,

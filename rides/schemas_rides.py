@@ -14,6 +14,7 @@ class RideStatus(str, Enum):
 class RideSchema(BaseModel):
     id: int
     uuid: str
+    vehicle_id: Optional[int] = None
     vehicle_plate: str
     vehicle_model: str
     seats: int
@@ -99,8 +100,9 @@ class RideDetailsSchema(BaseModel):
 
 
 class RideCreateSchema(RideDetailsSchema):
-    vehicle_plate: str
-    vehicle_model: str
+    vehicle_id: Optional[int] = None
+    vehicle_plate: Optional[str] = None
+    vehicle_model: Optional[str] = None
     seats: int
     town_starting: str
     town_ending: str
