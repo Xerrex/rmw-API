@@ -1,10 +1,11 @@
 from typing import List, Optional
-from datetime import datetime
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from datetime import datetime, timezone
+from fastapi import APIRouter, Depends, HTTPException, Query, status, BackgroundTasks
 from sqlalchemy.orm import Session
 from auth.deps_auth import get_current_user
 from auth.schemas import UserSchema
 from db.db_deps import get_db
+from db.db_setup import SessionLocal
 from .crud_rides import get_rides, create_ride, get_ride_by_uuid, \
     update_ride
 from .crud_ride_requests import get_requests_on_ride, create_ride_request, \
@@ -16,11 +17,37 @@ from .schemas_rides import RidesSchema, RideCreateSchema, RideSchema, \
 from .schemas_rides_requests import Ride_RequestSchema, Ride_RequestCreateSchema, \
     Ride_RequestUpdateSchema
 from .schemas_audit import AuditLogSchema
-from .helpers import serialize_ride, serialize_ride_request, serialize_audit_log, can_edit_ride_request
+from .helpers import (
+    serialize_ride,
+    serialize_ride_request,
+    serialize_audit_log,
+    can_edit_ride_request,
+    make_aware,
+    auto_update_expired_rides_and_requests,
+)
 from db.models import AuditLog
 
 
 router = APIRouter()
+
+
+def run_auto_update_expired_rides():
+    """Helper function to run auto update of expired rides in background tasks."""
+    db = SessionLocal()
+    try:
+        auto_update_expired_rides_and_requests(db)
+    finally:
+        db.close()
+
+
+@router.post("/process-expired", status_code=status.HTTP_202_ACCEPTED)
+def trigger_expired_check(
+    background_tasks: BackgroundTasks,
+    current_user: UserSchema = Depends(get_current_user),
+):
+    """Trigger background task processing for expired rides and requests using FastAPI BackgroundTasks."""
+    background_tasks.add_task(run_auto_update_expired_rides)
+    return {"message": "Background task scheduled to update expired rides and requests."}
 
 
 @router.get("/", response_model=RidesSchema)
@@ -132,6 +159,15 @@ def make_ride_request(ride_uuid: str, rideRequestData:Ride_RequestCreateSchema,
     if not ride:
         detail = f"Ride with uuid: '{ride_uuid}' does not exists."
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=detail)
+
+    if ride.status != "upcoming":
+        detail = "Cannot request a ride that is no longer upcoming."
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=detail)
+
+    depart_time_aware = make_aware(ride.depart_time)
+    if depart_time_aware is not None and depart_time_aware <= datetime.now(timezone.utc):
+        detail = "Cannot request a ride that has already departed."
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=detail)
     
     if ride.owner_id == current_user.id:
         detail = f"You are not allowed to join this ride"

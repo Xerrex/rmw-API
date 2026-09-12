@@ -142,3 +142,82 @@ def serialize_audit_log(entry: AuditLog) -> dict:
         "created_at": entry.created_at,
     }
 
+
+def make_aware(dt: Optional[datetime]) -> Optional[datetime]:
+    if dt is None:
+        return None
+    if dt.tzinfo is None:
+        return dt.replace(tzinfo=timezone.utc)
+    return dt.astimezone(timezone.utc)
+
+
+def auto_update_expired_rides_and_requests(db) -> None:
+    """Automatically update ride requests and ride statuses based on current time.
+
+    1. Pending requests on rides whose depart_time has passed are marked as Rejected
+       and logged in audit logs.
+    2. Rides whose end_time + 12 hours has passed (and status is still 'upcoming')
+       are marked as 'completed' and logged in audit logs.
+    """
+    from .audit import log_action
+
+    now = datetime.now(timezone.utc)
+
+    # 1. Pending requests on rides whose depart_time has passed -> mark as Rejected
+    pending_requests = (
+        db.query(RideRequest)
+        .join(RideRequest.ride)
+        .filter(RideRequest.status == PENDING_STATUS)
+        .all()
+    )
+
+    has_changes = False
+    for req in pending_requests:
+        if req.ride and req.ride.depart_time:
+            depart_time_aware = make_aware(req.ride.depart_time)
+            if depart_time_aware and depart_time_aware <= now:
+                req.status = REJECTED_STATUS
+                db.add(req)
+                log_action(
+                    db,
+                    entity_type="ride_request",
+                    entity_uuid=req.uuid,
+                    action="status_changed",
+                    actor_id=None,
+                    changes={
+                        "status": {"from": PENDING_STATUS, "to": REJECTED_STATUS},
+                        "reason": "auto_rejected_depart_time_passed",
+                    },
+                )
+                has_changes = True
+
+    # 2 & 3. Upcoming rides whose end_time + 12 hours has passed -> mark as completed
+    cutoff_time = now - timedelta(hours=12)
+    upcoming_rides = (
+        db.query(Ride)
+        .filter(Ride.status == "upcoming")
+        .all()
+    )
+
+    for ride in upcoming_rides:
+        if ride.end_time:
+            end_time_aware = make_aware(ride.end_time)
+            if end_time_aware and end_time_aware <= cutoff_time:
+                ride.status = "completed"
+                db.add(ride)
+                log_action(
+                    db,
+                    entity_type="ride",
+                    entity_uuid=ride.uuid,
+                    action="status_changed",
+                    actor_id=None,
+                    changes={
+                        "status": {"from": "upcoming", "to": "completed"},
+                        "reason": "auto_completed_end_time_passed_12h",
+                    },
+                )
+                has_changes = True
+
+    if has_changes:
+        db.commit()
+

@@ -82,7 +82,6 @@ def get_ride_request_by_uuid(db: Session, ride_request_uuid: str):
     Returns:
         RideRequest: A database object representing a ride-request.
     """
-
     ride_request = db.query(RideRequest).filter(RideRequest.uuid == ride_request_uuid).first()
     return ride_request
 

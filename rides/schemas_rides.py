@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import List, Optional
 from pydantic import BaseModel, field_validator, model_validator, ConfigDict
@@ -75,15 +75,20 @@ class RideDetailsSchema(BaseModel):
         """
         if isinstance(value, str):
             try:
-                return datetime.strptime(value, "%d-%m-%Y %H:%M")
+                dt = datetime.strptime(value, "%d-%m-%Y %H:%M")
             except ValueError:
                 try:
-                    return datetime.fromisoformat(value)
+                    dt = datetime.fromisoformat(value)
                 except ValueError:
                     raise ValueError(
                         "Invalid datetime format. Use 'dd-mm-yyyy hh:mm' or ISO 8601."
                     )
-        return value
+        else:
+            dt = value
+
+        if isinstance(dt, datetime) and dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        return dt
 
     @model_validator(mode="after")
     def validate_end_after_depart(self):

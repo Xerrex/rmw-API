@@ -60,7 +60,6 @@ def get_ride_by_uuid(uuid: str, db:Session):
     Returns:
         Ride: A database object representing a ride.
     """
-
     ride = db.query(Ride).options(
         selectinload(Ride.ride_requests), joinedload(Ride.owner)
     ).filter(Ride.uuid == uuid).first()
