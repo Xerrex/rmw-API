@@ -9,3 +9,6 @@ email-validator
 # security
 passlib[bcrypt]
 python-jose
+
+# cli
+typer

@@ -12,6 +12,7 @@ from auth import router as Auth_router
 from user import router as User_router
 from rides import router as Ride_router
 from dashboard.router import router as Dashboard_router
+from management.router import router as Management_router
 from rides.helpers import auto_update_expired_rides_and_requests
 
 from config import ALLOWED_ORIGINS
@@ -82,3 +83,4 @@ app.include_router(Auth_router, prefix="/auth", tags=["Auth"])
 app.include_router(User_router, prefix="/user", tags=["User"])
 app.include_router(Ride_router, prefix="/rides", tags=["Ride"])
 app.include_router(Dashboard_router, prefix="/dashboard", tags=["Dashboard"])
+app.include_router(Management_router, prefix="/management", tags=["Management"])

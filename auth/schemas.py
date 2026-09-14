@@ -31,6 +31,7 @@ class UserSchema(BaseModel):
     first_name: str
     last_name: str
     email: EmailStr
+    role: str
     created_at: datetime
     updated_at: datetime
 

@@ -6,6 +6,9 @@ from sqlalchemy.orm import relationship, Mapped, mapped_column
 from sqlalchemy.sql import func
 from .db_setup import Base
 
+# Roles that grant access to the management pages (analytics, user access management)
+MANAGEMENT_ROLES = ("admin", "staff")
+
 
 class User(Base):
     """User
@@ -20,6 +23,8 @@ class User(Base):
     # username = Column(String(20), nullable=True) # TODO: consider adding later
     email: Mapped[str] = mapped_column(String(100), nullable=False, unique=True, index=True)
     password: Mapped[str] = mapped_column(String, nullable=False)
+    # "user" | "staff" | "admin" - staff/admin get access to the management pages
+    role: Mapped[str] = mapped_column(String(10), nullable=False, default="user", server_default="user")
 
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.now(timezone.utc))
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.now(timezone.utc), onupdate=datetime.now(timezone.utc))
