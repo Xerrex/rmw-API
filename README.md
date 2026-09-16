@@ -37,15 +37,27 @@ git clone https://github.com/Xerrex/rmw-API.git
 cd rmw-API
 ```
 
-* Create a virtual environment & activate it.
-```
-python3 -m venv venv && source venv/bin/activate
-```
+* Using Pip
+  - Create a virtual environment & activate it.
+  ```
+  python3 -m venv venv && source venv/bin/activate
+  ```
 
-* Install dependancies
-```
-pip install -r requirements.txt
-```
+  - Install dependancies
+  ```
+  pip install -r requirements.txt
+  ```
+
+* Using uv
+  - Setup dependencies
+  ```
+  uv sync
+  ```
+  
+  - Activate virtual environment
+  ```
+  source .venv/bin/activate
+  ```
 
 * Create and edit environment variables.
 ```
@@ -61,7 +73,6 @@ fastapi dev main.py
 ```
 
 * View the App serving [here](http://127.0.0.1:8000 )
-
 * View API docs [here](ttp://127.0.0.1:8000/docs)
 
 
