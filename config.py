@@ -1,57 +1,19 @@
 import os
-from datetime import timedelta
+from dotenv import load_dotenv
 
 
-BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+load_dotenv()
 
 
-class Config:
-    """Base Configurations
-    """
-    API_TITLE = os.getenv("API_TITLE") or "RMI-API"
-    API_VERSION = os.getenv("API_VERSION") or "1.0"
-    API_DESCRIPTION = os.getenv("API_DESCRIPTION")
+ENVIRONMENT: str = os.getenv("ENVIRONMENT")
 
-    SECRET_KEY = os.getenv("SECRET_KEY") or os.urandom(16)
-    
-    JWT_SECRET_KEY = SECRET_KEY
-    JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=1)
+SQLALCHEMY_DATABASE_URI: str = "sqlite:///app.db"
+DATABASE_CONNECT_ARGS = {"check_same_thread": False} if ENVIRONMENT=="DEV" else None
 
-    SQLALCHEMY_TRACK_MODIFICATIONS = False
+SECRET_KEY: str = os.getenv("SECRET_KEY", "01cbdc2656463a93819efe9030237ae0f7")
+TOKEN_ALGORITHM: str = "HS256"
+TOKEN_EXPIRY_MINUTES: int = 60
+REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 
-    RESTX_MASK_SWAGGER= False
-
-
-class DevelopmentConfig(Config):
-    """Development Configurations
-    """
-    DEBUG = True
-    SQLALCHEMY_DATABASE_URI = \
-        'sqlite:////' + os.path.join(BASE_DIR, 'db/api.db')
-
-
-class TestingConfig(Config):
-    """Testing Configurations
-    """
-    TESTING = True
-    DEBUG = True
-    SQLALCHEMY_DATABASE_URI = \
-        'sqlite:////' + os.path.join(BASE_DIR, 'db/apitest.db')
-
-
-class ProductionConfig(Config):
-    """Production Configurations
-    """
-    DB_HOST = os.getenv("DB_HOST")
-    DB_USER = os.getenv("DB_USER")
-    DB_PASS = os.getenv("DB_PASS")
-    DB_NAME = os.getenv("DB_NAME")
-    SQLALCHEMY_DATABASE_URI = f"postgresql://{DB_USER}:{DB_PASS}@{DB_HOST}/{DB_NAME}"
-
-
-configs = {
-    "development": DevelopmentConfig,
-    "testing": TestingConfig,
-    "production": ProductionConfig
-}
-
+origins = os.getenv("ALLOWED_ORIGINS")
+ALLOWED_ORIGINS = origins.split(",") if origins else []
